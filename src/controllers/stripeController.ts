@@ -19,15 +19,17 @@ const uidgen = new UIDGenerator();
 export const stripePay = asyncHandler(async (req: Request, res: Response) => {
   const { token, amount } = req.body;
   const idempotencyKey = await uidgen.generate();
+  const totalAmountInCents = Math.round(amount * 100); // Ensure the amount is rounded to an integer
+
   return stripe.customers
     .create({
       email: token?.email,
       source: token,
     })
     .then((customer) => {
-      stripe.charges.create(
+      return stripe.charges.create(
         {
-          amount: amount * 100,
+          amount: totalAmountInCents,
           currency: "usd",
           customer: customer.id,
           receipt_email: token?.email,
@@ -37,16 +39,22 @@ export const stripePay = asyncHandler(async (req: Request, res: Response) => {
     })
     .then((result) => {
       res.status(200).json(result);
+    })
+    .catch((error) => {
+      res.status(400).json({ error: error.message });
     });
 });
 
 export const mobileStripePayment = asyncHandler(
   async (req: any, res: Response) => {
     try {
+      const amount = Number(req.body.amount);
+      const totalAmountInCents = Math.round(amount * 100); // Ensure the amount is rounded to an integer
+
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Number(req.body.amount) * 100, //lowest denomination of particular currency
+        amount: totalAmountInCents, // lowest denomination of particular currency
         currency: "usd",
-        payment_method_types: ["card"], //by default
+        payment_method_types: ["card"], // by default
       });
 
       const clientSecret = paymentIntent.client_secret;
