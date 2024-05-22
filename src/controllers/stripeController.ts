@@ -7,7 +7,7 @@ import { Request, Response } from "express";
 const key: string | undefined = sanitizedConfig.STRIPE_SECRET_KEY || "";
 
 const stripe = new Stripe(key, {
-  apiVersion: "2020-08-27",
+  apiVersion: "2024-04-10",
 });
 
 const uidgen = new UIDGenerator();
