@@ -13,7 +13,7 @@ router
     .route('/:id')
     .get(userControllers_1.getUserBydId)
     .delete(auth_1.auth, auth_1.admin, userControllers_1.deleteUser)
-    .put(auth_1.auth, userControllers_1.updatrUserProfile);
+    .put(auth_1.auth, userControllers_1.updateUserProfile);
 router.route('/register').post(userControllers_1.register);
 router.route('/login').post(userControllers_1.login);
 exports.default = router;

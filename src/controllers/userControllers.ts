@@ -140,7 +140,7 @@ export const getUserBydId = asyncHandler(
 // @route   Put /api/users/:id
 // @access  Private
 
-export const updatrUserProfile = asyncHandler(
+export const updateUserProfile = asyncHandler(
   async (req: Request, res: Response) => {
     const { name, email, password } = req.body;
     const user = await User.findById(req.params.id);
@@ -150,10 +150,10 @@ export const updatrUserProfile = asyncHandler(
       user.email = email || user.email;
       if (password) user.password = password;
       await user.save();
-      res.status(200).json("user has been updated!");
+      res.status(200).json("User has been updated!");
     } else {
       res.status(400);
-      throw new Error("user not found!");
+      throw new Error("User not found!");
     }
   }
 );
@@ -169,10 +169,10 @@ export const promoteAdmin = asyncHandler(
     if (user) {
       user.isAdmin = true;
       await user.save();
-      res.status(200).json("user has been promoted to admin");
+      res.status(200).json("User has been promoted to admin");
     } else {
       res.status(400);
-      throw new Error("user not found!");
+      throw new Error("User not found!");
     }
   }
 );
@@ -186,9 +186,9 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 
   if (user) {
     await user.remove();
-    res.status(200).json("user has been deleted");
+    res.status(200).json("User has been deleted");
   } else {
     res.status(400);
-    throw new Error("user not found!");
+    throw new Error("User not found!");
   }
 });

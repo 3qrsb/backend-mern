@@ -5,7 +5,7 @@ import {
   getUsersList,
   getUserBydId,
   deleteUser,
-  updatrUserProfile,
+  updateUserProfile,
   promoteAdmin,
 } from '../controllers/userControllers';
 import { admin, auth } from '../middleware/auth';
@@ -18,7 +18,7 @@ router
   .route('/:id')
   .get(getUserBydId)
   .delete(auth, admin, deleteUser)
-  .put(auth, updatrUserProfile);
+  .put(auth, updateUserProfile);
 router.route('/register').post(register);
 router.route('/login').post(login);
 
