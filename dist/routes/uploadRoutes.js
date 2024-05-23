@@ -36,7 +36,6 @@ const uploadImg = (0, multer_1.default)({
 // @route   Post /api/image
 // @access  Private
 router.post('/image', uploadImg.single('image'), (req, res) => {
-    var _a;
-    res.send(`/${(_a = req.file) === null || _a === void 0 ? void 0 : _a.path}`);
+    res.send(`/${req.file?.path}`);
 });
 exports.default = router;

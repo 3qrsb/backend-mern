@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -20,7 +11,7 @@ const generateToken_1 = __importDefault(require("../utils/generateToken"));
 // @desc    Register a new user
 // @route   POST /api/users/register
 // @access  Public
-exports.register = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.register = (0, express_async_handler_1.default)(async (req, res) => {
     const { name, email, password } = req.body;
     if (!email ||
         !email.includes("@") ||
@@ -31,40 +22,40 @@ exports.register = (0, express_async_handler_1.default)((req, res) => __awaiter(
         res.status(422).json({ message: "Invalid input." });
         return;
     }
-    const exist = yield userModel_1.default.findOne({ email });
+    const exist = await userModel_1.default.findOne({ email });
     if (exist) {
         res.status(422).json({ message: "email already been used!" });
         return;
     }
     const user = new userModel_1.default({ name, email, password });
     if (user) {
-        const newUser = yield user.save();
+        const newUser = await user.save();
         res.status(201).json(newUser);
     }
     else {
         res.status(500);
         throw new Error("user not found!");
     }
-}));
+});
 // @desc    Auth user & get token
 // @route   POST /api/users/login
 // @access  Public
-exports.login = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.login = (0, express_async_handler_1.default)(async (req, res) => {
     const { email, password } = req.body;
     if (!email || !email.includes("@") || !password || password.trim() === "") {
         res.status(422).json({ message: "Invalid input." });
         return;
     }
-    const user = yield userModel_1.default.findOne({ email });
+    const user = await userModel_1.default.findOne({ email });
     if (user) {
-        const match = yield bcryptjs_1.default.compare(password, user.password);
+        const match = await bcryptjs_1.default.compare(password, user.password);
         if (match) {
             res.status(200).json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
-                token: (0, generateToken_1.default)(user === null || user === void 0 ? void 0 : user._id),
+                token: (0, generateToken_1.default)(user?._id),
             });
         }
         else {
@@ -74,11 +65,11 @@ exports.login = (0, express_async_handler_1.default)((req, res) => __awaiter(voi
     else {
         res.status(500).json({ message: "email not exist" });
     }
-}));
+});
 // @desc    Get all users
 // @route   Get /api/users
 // @access  Admin
-exports.getUsersList = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.getUsersList = (0, express_async_handler_1.default)(async (req, res) => {
     const pageSize = 10;
     const page = req.query.page || 1;
     const query = req.query.query || "";
@@ -90,11 +81,16 @@ exports.getUsersList = (0, express_async_handler_1.default)((req, res) => __awai
             },
         }
         : {};
-    const users = yield userModel_1.default.find(Object.assign({}, queryFilter))
+    const users = await userModel_1.default.find({
+        ...queryFilter,
+    })
         .skip(pageSize * (page - 1))
+        .sort("-createdAt")
         .limit(pageSize)
         .lean();
-    const countUsers = yield userModel_1.default.countDocuments(Object.assign({}, queryFilter));
+    const countUsers = await userModel_1.default.countDocuments({
+        ...queryFilter,
+    });
     const pages = Math.ceil(countUsers / pageSize);
     if (users) {
         res.status(200).json({
@@ -108,12 +104,12 @@ exports.getUsersList = (0, express_async_handler_1.default)((req, res) => __awai
         res.status(500);
         throw new Error("users not found!");
     }
-}));
+});
 // @desc    Get single user
 // @route   Get /api/users/:id
 // @access  Private
-exports.getUserBydId = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield userModel_1.default.findById(req.params.id);
+exports.getUserBydId = (0, express_async_handler_1.default)(async (req, res) => {
+    const user = await userModel_1.default.findById(req.params.id);
     if (user) {
         res.status(200).json(user);
     }
@@ -121,52 +117,52 @@ exports.getUserBydId = (0, express_async_handler_1.default)((req, res) => __awai
         res.status(400);
         throw new Error("user not found!");
     }
-}));
+});
 // @desc    update user profile
 // @route   Put /api/users/:id
 // @access  Private
-exports.updateUserProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.updateUserProfile = (0, express_async_handler_1.default)(async (req, res) => {
     const { name, email, password } = req.body;
-    const user = yield userModel_1.default.findById(req.params.id);
+    const user = await userModel_1.default.findById(req.params.id);
     if (user) {
         user.name = name || user.name;
         user.email = email || user.email;
         if (password)
             user.password = password;
-        yield user.save();
-        res.status(200).json("user has been updated!");
+        await user.save();
+        res.status(200).json("User has been updated!");
     }
     else {
         res.status(400);
-        throw new Error("user not found!");
+        throw new Error("User not found!");
     }
-}));
+});
 // @desc    promote user to admin
 // @route   Post /api/users/promote/:id
 // @access  Admin
-exports.promoteAdmin = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield userModel_1.default.findById(req.params.id);
+exports.promoteAdmin = (0, express_async_handler_1.default)(async (req, res) => {
+    const user = await userModel_1.default.findById(req.params.id);
     if (user) {
         user.isAdmin = true;
-        yield user.save();
-        res.status(200).json("user has been promoted to admin");
+        await user.save();
+        res.status(200).json("User has been promoted to admin");
     }
     else {
         res.status(400);
-        throw new Error("user not found!");
+        throw new Error("User not found!");
     }
-}));
+});
 // @desc    delete user
 // @route   Delete /api/users/:id
 // @access  Admin
-exports.deleteUser = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield userModel_1.default.findById(req.params.id);
+exports.deleteUser = (0, express_async_handler_1.default)(async (req, res) => {
+    const user = await userModel_1.default.findById(req.params.id);
     if (user) {
-        yield user.remove();
-        res.status(200).json("user has been deleted");
+        await user.remove();
+        res.status(200).json("User has been deleted");
     }
     else {
         res.status(400);
-        throw new Error("user not found!");
+        throw new Error("User not found!");
     }
-}));
+});

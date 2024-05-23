@@ -1,66 +1,33 @@
-import Stripe from "stripe";
-import asyncHandler from "express-async-handler";
-import UIDGenerator from "uid-generator";
-import sanitizedConfig from "../config";
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
+import Stripe from 'stripe';
 
-const key: string | undefined = sanitizedConfig.STRIPE_SECRET_KEY || "";
-
-const stripe = new Stripe(key, {
-  apiVersion: "2024-04-10",
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: '2024-04-10',
 });
 
-const uidgen = new UIDGenerator();
+export const createCheckoutSession = async (req: Request, res: Response) => {
+  try {
+    const { items } = req.body;
 
-export const stripePay = asyncHandler(async (req: Request, res: Response) => {
-  const { token, amount } = req.body;
-  const idempotencyKey = await uidgen.generate();
-  const totalAmountInCents = Math.round(amount * 100); // Ensure the amount is rounded to an integer
-
-  return stripe.customers
-    .create({
-      email: token?.email,
-      source: token,
-    })
-    .then((customer) => {
-      return stripe.charges.create(
-        {
-          amount: totalAmountInCents,
-          currency: "usd",
-          customer: customer.id,
-          receipt_email: token?.email,
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: items.map((item: any) => ({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: item.name,
+          },
+          unit_amount: Math.round(item.price * 100), // price in cents
         },
-        { idempotencyKey }
-      );
-    })
-    .then((result) => {
-      res.status(200).json(result);
-    })
-    .catch((error) => {
-      res.status(400).json({ error: error.message });
+        quantity: item.qty,
+      })),
+      mode: 'payment',
+      success_url: 'http://localhost:3000/success',
+      cancel_url: 'http://localhost:3000/cancel',
     });
-});
 
-export const mobileStripePayment = asyncHandler(
-  async (req: any, res: Response) => {
-    try {
-      const amount = Number(req.body.amount);
-      const totalAmountInCents = Math.round(amount * 100); // Ensure the amount is rounded to an integer
-
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: totalAmountInCents, // lowest denomination of particular currency
-        currency: "usd",
-        payment_method_types: ["card"], // by default
-      });
-
-      const clientSecret = paymentIntent.client_secret;
-
-      res.json({
-        clientSecret: clientSecret,
-      });
-    } catch (e: any) {
-      console.log(e.message);
-      res.json({ error: e.message });
-    }
+    res.status(200).json({ id: session.id });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
-);
+};

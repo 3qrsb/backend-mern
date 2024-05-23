@@ -11,6 +11,7 @@ import { errorHandler, notFound } from './middleware/errorMiddleware';
 import cors from 'cors';
 import path from 'path';
 import sanitizedConfig from './config';
+import stripeRoutes from './routes/stripeRoutes';
 
 dotenv.config({
   path: path.resolve(__dirname, '/.env'),
@@ -18,15 +19,16 @@ dotenv.config({
 
 connectDb();
 
-const app: Application = express();
+const app = express();
 
 if (sanitizedConfig.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
+app.use('/api/stripe', stripeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
@@ -37,10 +39,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), '/uploads')));
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT: number | string = sanitizedConfig.PORT || 1337;
-
-const server: Server = app.listen(PORT, () =>
-  console.log(
-    `🟢 Server running in ${sanitizedConfig.NODE_ENV} mode on port ${PORT}`
-  )
-);
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
