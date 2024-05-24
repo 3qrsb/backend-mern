@@ -3,14 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createCheckoutSession = void 0;
+exports.handleWebhook = exports.createCheckoutSession = void 0;
 const stripe_1 = __importDefault(require("stripe"));
+const orderModel_1 = __importDefault(require("../models/orderModel"));
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2024-04-10',
 });
 const createCheckoutSession = async (req, res) => {
     try {
-        const { items } = req.body;
+        const { items, orderId } = req.body;
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: items.map((item) => ({
@@ -26,6 +27,9 @@ const createCheckoutSession = async (req, res) => {
             mode: 'payment',
             success_url: 'http://localhost:3000/success',
             cancel_url: 'http://localhost:3000/cancel',
+            metadata: {
+                orderId: orderId,
+            }
         });
         res.status(200).json({ id: session.id });
     }
@@ -34,3 +38,41 @@ const createCheckoutSession = async (req, res) => {
     }
 };
 exports.createCheckoutSession = createCheckoutSession;
+const handleWebhook = async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    }
+    catch (err) {
+        console.error(`Webhook signature verification failed: ${err.message}`);
+        return res.sendStatus(400);
+    }
+    // Handle the event
+    switch (event.type) {
+        case 'checkout.session.completed':
+            const session = event.data.object;
+            const orderId = session.metadata?.orderId;
+            const paid = session.payment_status === 'paid';
+            if (orderId && paid) {
+                try {
+                    const order = await orderModel_1.default.findById(orderId);
+                    if (order) {
+                        order.isPaid = true;
+                        await order.save();
+                    }
+                    else {
+                        console.error(`Order with id ${orderId} not found`);
+                    }
+                }
+                catch (err) {
+                    console.error(`Error updating order status: ${err.message}`);
+                }
+            }
+            break;
+        default:
+            console.log(`Unhandled event type ${event.type}`);
+    }
+    res.sendStatus(200);
+};
+exports.handleWebhook = handleWebhook;

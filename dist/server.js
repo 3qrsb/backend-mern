@@ -25,7 +25,14 @@ if (config_1.default.NODE_ENV === 'development') {
     app.use((0, morgan_1.default)('dev'));
 }
 app.use((0, cors_1.default)());
-app.use(express_1.default.json());
+app.use((req, res, next) => {
+    if (req.originalUrl.endsWith('/webhook')) {
+        next();
+    }
+    else {
+        express_1.default.json()(req, res, next);
+    }
+});
 app.use('/api/stripe', stripeRoutes_1.default);
 app.use('/api/products', productRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);

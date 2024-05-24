@@ -1,5 +1,4 @@
 import express, { Application } from 'express';
-import { Server } from 'http';
 import connectDb from './config/db';
 import dotenv from 'dotenv';
 import productRoutes from './routes/productRoutes';
@@ -26,7 +25,13 @@ if (sanitizedConfig.NODE_ENV === 'development') {
 }
 
 app.use(cors());
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.originalUrl.endsWith('/webhook')) {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
 
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/products', productRoutes);

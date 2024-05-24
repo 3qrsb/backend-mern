@@ -5,5 +5,6 @@ namespace NodeJS {
     JWT_SECRET: string;
     STRIPE_SECRET_KEY: string;
     MONGO_URI: string;
+    STRIPE_WEBHOOK_SECRET: string;
   }
 }

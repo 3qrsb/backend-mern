@@ -14,6 +14,7 @@ interface ENV {
   MONGO_URI: string | undefined;
   STRIPE_SECRET_KEY: string | undefined;
   JWT_SECRET: string | undefined;
+  STRIPE_WEBHOOK_SECRET: string | undefined;
 }
 
 interface Config {
@@ -22,6 +23,7 @@ interface Config {
   MONGO_URI: string;
   STRIPE_SECRET_KEY: string;
   JWT_SECRET: string;
+  STRIPE_WEBHOOK_SECRET: string;
 }
 
 // Loading process.env as ENV interface
@@ -33,6 +35,7 @@ const getConfig = (): ENV => {
     MONGO_URI: process.env.MONGO_URI,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET
   };
 };
 
