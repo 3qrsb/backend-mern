@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import Order from '../models/orderModel'
+import { sendPaymentConfirmationEmail } from './emailController';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2024-04-10',
@@ -53,12 +54,14 @@ export const handleWebhook = async (req: Request, res: Response) => {
       const session = event.data.object as Stripe.Checkout.Session;
       const orderId = session.metadata?.orderId;
       const paid = session.payment_status === 'paid';
-      if (orderId && paid) {
+      const paymentMethod = session.payment_method_types[0];
+      if (orderId && paid && session.customer_details?.email) {
         try {
           const order = await Order.findById(orderId);
           if (order) {
             order.isPaid = true;
             await order.save();
+            await sendPaymentConfirmationEmail(session.customer_details.email, orderId, paymentMethod);
           } else {
             console.error(`Order with id ${orderId} not found`);
           }

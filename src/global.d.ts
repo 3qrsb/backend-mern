@@ -6,5 +6,7 @@ namespace NodeJS {
     STRIPE_SECRET_KEY: string;
     MONGO_URI: string;
     STRIPE_WEBHOOK_SECRET: string;
+    EMAIL_USER: string;
+    EMAIL_PASS: string;
   }
 }

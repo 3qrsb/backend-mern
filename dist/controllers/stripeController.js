@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleWebhook = exports.createCheckoutSession = void 0;
 const stripe_1 = __importDefault(require("stripe"));
 const orderModel_1 = __importDefault(require("../models/orderModel"));
+const emailController_1 = require("./emailController");
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2024-04-10',
 });
@@ -54,12 +55,14 @@ const handleWebhook = async (req, res) => {
             const session = event.data.object;
             const orderId = session.metadata?.orderId;
             const paid = session.payment_status === 'paid';
-            if (orderId && paid) {
+            const paymentMethod = session.payment_method_types[0];
+            if (orderId && paid && session.customer_details?.email) {
                 try {
                     const order = await orderModel_1.default.findById(orderId);
                     if (order) {
                         order.isPaid = true;
                         await order.save();
+                        await (0, emailController_1.sendPaymentConfirmationEmail)(session.customer_details.email, orderId, paymentMethod);
                     }
                     else {
                         console.error(`Order with id ${orderId} not found`);
