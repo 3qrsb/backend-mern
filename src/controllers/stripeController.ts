@@ -11,7 +11,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
     const { items, orderId } = req.body;
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       line_items: items.map((item: any) => ({
         price_data: {
           currency: 'usd',
@@ -23,6 +22,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         quantity: item.qty,
       })),
       mode: 'payment',
+      allow_promotion_codes: true,
       success_url: 'http://localhost:3000/success',
       cancel_url: 'http://localhost:3000/cancel',
       metadata: {
