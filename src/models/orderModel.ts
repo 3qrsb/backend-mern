@@ -20,6 +20,7 @@ interface IOrder {
   shippingAddress: AddressType;
   totalPrice: number;
   isPaid: boolean;
+  discountAmount: number,
 }
 
 const orderSchema = new Schema<IOrder>(
@@ -44,6 +45,7 @@ const orderSchema = new Schema<IOrder>(
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
     },
+    discountAmount: { type: Number },
     totalPrice: { type: Number, required: true, default: 0.0 },
     isPaid: { type: Boolean, required: true, default: false },
   },

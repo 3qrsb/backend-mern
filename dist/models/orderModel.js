@@ -22,6 +22,7 @@ const orderSchema = new mongoose_1.Schema({
         postalCode: { type: String, required: true },
         country: { type: String, required: true },
     },
+    discountAmount: { type: Number },
     totalPrice: { type: Number, required: true, default: 0.0 },
     isPaid: { type: Boolean, required: true, default: false },
 }, {

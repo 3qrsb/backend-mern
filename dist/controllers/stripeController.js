@@ -6,14 +6,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleWebhook = exports.createCheckoutSession = void 0;
 const stripe_1 = __importDefault(require("stripe"));
 const orderModel_1 = __importDefault(require("../models/orderModel"));
-const emailController_1 = require("./emailController");
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2024-04-10',
 });
 const createCheckoutSession = async (req, res) => {
     try {
         const { items, orderId } = req.body;
+        const order = await orderModel_1.default.findById(orderId);
+        if (!order) {
+            res.status(404).json({ message: 'Order not found' });
+            return;
+        }
+        const discountAmount = order.discountAmount || 0;
         const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
             line_items: items.map((item) => ({
                 price_data: {
                     currency: 'usd',
@@ -25,12 +31,13 @@ const createCheckoutSession = async (req, res) => {
                 quantity: item.qty,
             })),
             mode: 'payment',
-            allow_promotion_codes: true,
             success_url: 'http://localhost:3000/success',
             cancel_url: 'http://localhost:3000/cancel',
+            allow_promotion_codes: true,
             metadata: {
                 orderId: orderId,
-            }
+                discountAmount: discountAmount.toString(), // Convert to string for metadata
+            },
         });
         res.status(200).json({ id: session.id });
     }
@@ -46,36 +53,23 @@ const handleWebhook = async (req, res) => {
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     }
     catch (err) {
-        console.error(`Webhook signature verification failed: ${err.message}`);
-        return res.sendStatus(400);
+        return res.status(400).send(`Webhook error: ${err.message}`);
     }
-    // Handle the event
-    switch (event.type) {
-        case 'checkout.session.completed':
-            const session = event.data.object;
-            const orderId = session.metadata?.orderId;
-            const paid = session.payment_status === 'paid';
-            const paymentMethod = session.payment_method_types[0];
-            if (orderId && paid && session.customer_details?.email) {
-                try {
-                    const order = await orderModel_1.default.findById(orderId);
-                    if (order) {
-                        order.isPaid = true;
-                        await order.save();
-                        await (0, emailController_1.sendPaymentConfirmationEmail)(session.customer_details.email, orderId, paymentMethod);
-                    }
-                    else {
-                        console.error(`Order with id ${orderId} not found`);
-                    }
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const orderId = session.metadata?.orderId;
+        if (orderId) {
+            const order = await orderModel_1.default.findById(orderId);
+            if (order) {
+                order.isPaid = true;
+                // Use the total_details field from the Stripe event data to update the discountAmount
+                if (session.total_details?.amount_discount) {
+                    order.discountAmount = session.total_details.amount_discount / 100; // Convert from cents to dollars
                 }
-                catch (err) {
-                    console.error(`Error updating order status: ${err.message}`);
-                }
+                await order.save();
             }
-            break;
-        default:
-            console.log(`Unhandled event type ${event.type}`);
+        }
     }
-    res.sendStatus(200);
+    res.status(200).json({ received: true });
 };
 exports.handleWebhook = handleWebhook;
