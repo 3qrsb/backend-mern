@@ -89,12 +89,13 @@ export const deleteOrder = asyncHandler(async (req: Request, res: Response) => {
 // @access  Private
 
 export const createOrder = asyncHandler(async (req: any, res: Response) => {
-  const { cartItems, shippingAddress, totalPrice } = req.body;
+  const { cartItems, shippingAddress, totalPrice, discountAmount } = req.body;
 
   const order = new Order({
     cartItems,
     shippingAddress,
     totalPrice,
+    discountAmount,
     user: req.user._id,
   });
 

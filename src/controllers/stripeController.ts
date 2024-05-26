@@ -66,9 +66,9 @@ export const handleWebhook = async (req: Request, res: Response) => {
       const order = await Order.findById(orderId);
       if (order) {
         order.isPaid = true;
-        // Use the total_details field from the Stripe event data to update the discountAmount
         if (session.total_details?.amount_discount) {
-          order.discountAmount = session.total_details.amount_discount / 100; // Convert from cents to dollars
+          order.discountAmount = session.total_details.amount_discount / 100;
+          order.totalPrice = order.totalPrice - session.total_details?.amount_discount / 100 // Convert from cents to dollars
         }
         await order.save();
       }

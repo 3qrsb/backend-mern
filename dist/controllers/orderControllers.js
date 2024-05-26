@@ -78,11 +78,12 @@ exports.deleteOrder = (0, express_async_handler_1.default)(async (req, res) => {
 // @route   POST /api/orders
 // @access  Private
 exports.createOrder = (0, express_async_handler_1.default)(async (req, res) => {
-    const { cartItems, shippingAddress, totalPrice } = req.body;
+    const { cartItems, shippingAddress, totalPrice, discountAmount } = req.body;
     const order = new orderModel_1.default({
         cartItems,
         shippingAddress,
         totalPrice,
+        discountAmount,
         user: req.user._id,
     });
     if (cartItems.length === 0) {
