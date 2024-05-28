@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleWebhook = exports.createCheckoutSession = void 0;
 const stripe_1 = __importDefault(require("stripe"));
 const orderModel_1 = __importDefault(require("../models/orderModel"));
+const emailController_1 = require("./emailController");
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2024-04-10',
 });
@@ -60,13 +61,14 @@ const handleWebhook = async (req, res) => {
         const orderId = session.metadata?.orderId;
         if (orderId) {
             const order = await orderModel_1.default.findById(orderId);
-            if (order) {
+            if (order && session.customer_details?.email) {
                 order.isPaid = true;
                 if (session.total_details?.amount_discount) {
                     order.discountAmount = session.total_details.amount_discount / 100;
                     order.totalPrice = order.totalPrice - session.total_details?.amount_discount / 100; // Convert from cents to dollars
                 }
                 await order.save();
+                await (0, emailController_1.sendPaymentConfirmationEmail)(session.customer_details.email, orderId, session.payment_method_types[0]);
             }
         }
     }

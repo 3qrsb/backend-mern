@@ -25,9 +25,9 @@ const transporter = nodemailer.createTransport({
         <p>If you have any questions, feel free to contact our support team.</p>
         <br>
         <p>Best regards,</p>
-        <p>Your Company Name</p>
+        <p>Our Team</p>
         <div style="text-align: center; margin-top: 20px;">
-          <a href="http://yourwebsite.com" style="padding: 10px 20px; color: white; background-color: #4CAF50; border-radius: 5px; text-decoration: none;">Visit Our Website</a>
+          <a href="http://localhost:3000/" style="padding: 10px 20px; color: white; background-color: #4CAF50; border-radius: 5px; text-decoration: none;">Visit Our Website</a>
         </div>
       </div>
     `,

@@ -64,16 +64,17 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
     if (orderId) {
       const order = await Order.findById(orderId);
-      if (order) {
+      if (order && session.customer_details?.email) {
         order.isPaid = true;
         if (session.total_details?.amount_discount) {
           order.discountAmount = session.total_details.amount_discount / 100;
           order.totalPrice = order.totalPrice - session.total_details?.amount_discount / 100 // Convert from cents to dollars
         }
         await order.save();
+        await sendPaymentConfirmationEmail(session.customer_details.email, orderId, session.payment_method_types[0]);
       }
     }
   }
-
+  
   res.status(200).json({ received: true });
 };
