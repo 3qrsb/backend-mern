@@ -64,6 +64,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
     if (orderId) {
       const order = await Order.findById(orderId);
+      const amount = (session?.amount_total ?? 0) / 100;
       if (order && session.customer_details?.email) {
         order.isPaid = true;
         if (session.total_details?.amount_discount) {
@@ -71,7 +72,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
           order.totalPrice = order.totalPrice - session.total_details?.amount_discount / 100 // Convert from cents to dollars
         }
         await order.save();
-        await sendPaymentConfirmationEmail(session.customer_details.email, orderId, session.payment_method_types[0]);
+        await sendPaymentConfirmationEmail(session.customer_details.email, orderId, session.payment_method_types[0], amount);
       }
     }
   }

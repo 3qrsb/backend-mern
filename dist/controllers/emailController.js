@@ -12,8 +12,9 @@ const transporter = nodemailer_1.default.createTransport({
         pass: process.env.EMAIL_PASS,
     },
 });
-const sendPaymentConfirmationEmail = async (email, orderId, paymentMethod) => {
-    const paymentDate = new Date().toLocaleString('en-US', { timeZone: 'UTC' });
+const sendPaymentConfirmationEmail = async (email, orderId, paymentMethod, amount) => {
+    const paymentDate = new Date().toLocaleString('en-US', { timeZone: 'Asia/Almaty' });
+    const formattedPaymentMethod = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
@@ -25,7 +26,8 @@ const sendPaymentConfirmationEmail = async (email, orderId, paymentMethod) => {
         <p>Thank you for your payment. Your order has been successfully processed.</p>
         <p><strong>Order ID:</strong> ${orderId}</p>
         <p><strong>Payment Date:</strong> ${paymentDate}</p>
-        <p><strong>Payment Method:</strong> ${paymentMethod}</p>
+        <p><strong>Payment Method:</strong> ${formattedPaymentMethod}</p>
+        <p><strong>Total Amount Paid:</strong> $${amount.toFixed(2)}</p>
         <p>If you have any questions, feel free to contact our support team.</p>
         <br>
         <p>Best regards,</p>
