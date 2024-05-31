@@ -1,4 +1,18 @@
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
+import sanitizedConfig from '../config';
+
+interface TokenPayload {
+  [key: string]: any;
+}
+
+const generateToken = (payload: TokenPayload) => {
+  return jwt.sign(payload, sanitizedConfig.JWT_SECRET, {
+    expiresIn: '30d',
+  });
+};
+
+export default generateToken;
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -40,5 +54,25 @@ const transporter = nodemailer.createTransport({
       console.log('Payment confirmation email sent successfully');
     } catch (error) {
       console.error('Error sending payment confirmation email:', error);
+    }
+  };
+
+  export const sendVerificationEmail = async (user: any) => {
+    const token = generateToken({ userId: user._id, email: user.email });
+  
+    const verificationLink = `http://localhost:3000/verify-email?token=${token}`;
+  
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Email Verification',
+      text: `Please verify your email by clicking the following link: ${verificationLink}`,
+    };
+  
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log('Verification email sent successfully');
+    } catch (error) {
+      console.error('Error sending verification email:', error);
     }
   };

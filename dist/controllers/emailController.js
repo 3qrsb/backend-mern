@@ -3,8 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendPaymentConfirmationEmail = void 0;
+exports.sendVerificationEmail = exports.sendPaymentConfirmationEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const config_1 = __importDefault(require("../config"));
+const generateToken = (payload) => {
+    return jsonwebtoken_1.default.sign(payload, config_1.default.JWT_SECRET, {
+        expiresIn: '30d',
+    });
+};
+exports.default = generateToken;
 const transporter = nodemailer_1.default.createTransport({
     service: 'gmail',
     auth: {
@@ -47,3 +55,21 @@ const sendPaymentConfirmationEmail = async (email, orderId, paymentMethod, amoun
     }
 };
 exports.sendPaymentConfirmationEmail = sendPaymentConfirmationEmail;
+const sendVerificationEmail = async (user) => {
+    const token = generateToken({ userId: user._id, email: user.email });
+    const verificationLink = `http://localhost:3000/verify-email?token=${token}`;
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: 'Email Verification',
+        text: `Please verify your email by clicking the following link: ${verificationLink}`,
+    };
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Verification email sent successfully');
+    }
+    catch (error) {
+        console.error('Error sending verification email:', error);
+    }
+};
+exports.sendVerificationEmail = sendVerificationEmail;

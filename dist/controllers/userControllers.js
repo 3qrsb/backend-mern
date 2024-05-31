@@ -8,6 +8,7 @@ const express_async_handler_1 = __importDefault(require("express-async-handler")
 const userModel_1 = __importDefault(require("../models/userModel"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const generateToken_1 = __importDefault(require("../utils/generateToken"));
+const emailController_1 = require("./emailController");
 // @desc    Register a new user
 // @route   POST /api/users/register
 // @access  Public
@@ -27,14 +28,20 @@ exports.register = (0, express_async_handler_1.default)(async (req, res) => {
         res.status(422).json({ message: "email already been used!" });
         return;
     }
-    const user = new userModel_1.default({ name, email, password });
+    const user = new userModel_1.default({
+        name,
+        email,
+        password,
+        isVerified: false, // Set to false initially
+    });
     if (user) {
         const newUser = await user.save();
+        await (0, emailController_1.sendVerificationEmail)(newUser); // Send verification email
         res.status(201).json(newUser);
     }
     else {
         res.status(500);
-        throw new Error("user not found!");
+        throw new Error("User not found!");
     }
 });
 // @desc    Auth user & get token
@@ -48,6 +55,10 @@ exports.login = (0, express_async_handler_1.default)(async (req, res) => {
     }
     const user = await userModel_1.default.findOne({ email });
     if (user) {
+        if (!user.isVerified) {
+            res.status(401).json({ message: "Email not verified. Please verify your email." });
+            return;
+        }
         const match = await bcryptjs_1.default.compare(password, user.password);
         if (match) {
             res.status(200).json({
@@ -55,15 +66,15 @@ exports.login = (0, express_async_handler_1.default)(async (req, res) => {
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
-                token: (0, generateToken_1.default)(user?._id),
+                token: (0, generateToken_1.default)(user._id),
             });
         }
         else {
-            res.status(500).json({ message: "email or password wrong!" });
+            res.status(401).json({ message: "Invalid email or password." });
         }
     }
     else {
-        res.status(500).json({ message: "email not exist" });
+        res.status(404).json({ message: "User not found." });
     }
 });
 // @desc    Get all users
@@ -102,7 +113,7 @@ exports.getUsersList = (0, express_async_handler_1.default)(async (req, res) => 
     }
     else {
         res.status(500);
-        throw new Error("users not found!");
+        throw new Error("Users not found!");
     }
 });
 // @desc    Get single user

@@ -11,6 +11,7 @@ import cors from 'cors';
 import path from 'path';
 import sanitizedConfig from './config';
 import stripeRoutes from './routes/stripeRoutes';
+import { verifyEmail } from './controllers/verifyController';
 
 dotenv.config({
   path: path.resolve(__dirname, '/.env'),
@@ -33,6 +34,7 @@ app.use((req, res, next) => {
   }
 });
 
+app.get('/api/verify/verify-email', verifyEmail);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
