@@ -62,7 +62,30 @@ const sendVerificationEmail = async (user) => {
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: 'Email Verification',
-        text: `Please verify your email by clicking the following link: ${verificationLink}`,
+        html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px;">
+          <h2 style="color: #333;">Email Verification</h2>
+          <p style="font-size: 16px; color: #555;">
+            Hi ${user.name},
+          </p>
+          <p style="font-size: 16px; color: #555;">
+            Thank you for registering. Please verify your email by clicking the button below:
+          </p>
+          <a href="${verificationLink}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;">Verify Email</a>
+          <p style="font-size: 16px; color: #555; margin-top: 20px;">
+            If the button above doesn't work, please copy and paste the following link into your web browser:
+          </p>
+          <p style="font-size: 16px; color: #007bff; word-break: break-all;">${verificationLink}</p>
+          <p style="font-size: 16px; color: #555; margin-top: 20px;">
+            If you did not register for this account, please ignore this email.
+          </p>
+          <p style="font-size: 16px; color: #555; margin-top: 20px;">
+            Thanks,
+            <br>
+            Our Team
+          </p>
+        </div>
+      `,
     };
     try {
         await transporter.sendMail(mailOptions);
