@@ -28,6 +28,7 @@ exports.getProductSearch = (0, express_async_handler_1.default)(async (req, res)
     const category = req.query.category || "";
     const brand = req.query.brand || "";
     const searchQuery = req.query.query || "";
+    const sortOrder = req.query.sortOrder || "";
     const queryFilter = searchQuery && searchQuery !== "all"
         ? {
             name: {
@@ -38,6 +39,13 @@ exports.getProductSearch = (0, express_async_handler_1.default)(async (req, res)
         : {};
     const categoryFilter = category && category !== "all" ? { category } : {};
     const brandFilter = brand && brand !== "all" ? { brand } : {};
+    let sortFilter = {};
+    if (sortOrder === "low") {
+        sortFilter = { price: 1 };
+    }
+    else if (sortOrder === "high") {
+        sortFilter = { price: -1 };
+    }
     const categories = await productModel_1.default.find({}).distinct("category");
     const brands = await productModel_1.default.find({}).distinct("brand");
     const productDocs = await productModel_1.default.find({
@@ -45,6 +53,7 @@ exports.getProductSearch = (0, express_async_handler_1.default)(async (req, res)
         ...categoryFilter,
         ...brandFilter,
     })
+        .sort(sortFilter)
         .skip(pageSize * (page - 1))
         .limit(pageSize)
         .lean();

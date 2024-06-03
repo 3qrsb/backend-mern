@@ -30,6 +30,7 @@ export const getProductSearch = asyncHandler(
     const category = req.query.category || "";
     const brand = req.query.brand || "";
     const searchQuery = req.query.query || "";
+    const sortOrder = req.query.sortOrder || "";
 
     const queryFilter =
       searchQuery && searchQuery !== "all"
@@ -43,6 +44,13 @@ export const getProductSearch = asyncHandler(
     const categoryFilter = category && category !== "all" ? { category } : {};
     const brandFilter = brand && brand !== "all" ? { brand } : {};
 
+    let sortFilter = {};
+    if (sortOrder === "low") {
+      sortFilter = { price: 1 };
+    } else if (sortOrder === "high") {
+      sortFilter = { price: -1 };
+    }
+
     const categories = await Product.find({}).distinct("category");
     const brands = await Product.find({}).distinct("brand");
     const productDocs = await Product.find({
@@ -50,6 +58,7 @@ export const getProductSearch = asyncHandler(
       ...categoryFilter,
       ...brandFilter,
     })
+      .sort(sortFilter)
       .skip(pageSize * (page - 1))
       .limit(pageSize)
       .lean();
