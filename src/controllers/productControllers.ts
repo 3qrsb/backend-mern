@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Product from "../models/productModel";
+import { PipelineStage } from "mongoose";
 
 // @desc    Fetch 12 products
 // @route   GET /api/products
@@ -18,67 +19,101 @@ export const getProductList = asyncHandler(
   }
 );
 
+// Utility function to ensure a query parameter is a string
+const ensureString = (param: any): string => {
+  if (Array.isArray(param)) {
+    return param[0];
+  }
+  return typeof param === 'string' ? param : '';
+};
+
+// Utility function to ensure query parameter is a number
+const ensureNumber = (param: any, defaultValue: number): number => {
+  const num = Number(param);
+  return isNaN(num) ? defaultValue : num;
+};
+
 // @desc   Fetch all products with pages for pagination category brand for filter and searchQuery for search
 // @route   GET /api/products/search
 // @access  Public
 
-export const getProductSearch = asyncHandler(
-  async (req: Request, res: Response) => {
-    const pageSize: any = req.query.pageSize || 9;
-    const page: any = req.query.page || 1;
+export const getProductSearch = asyncHandler(async (req: Request, res: Response) => {
+  const pageSize = ensureNumber(req.query.pageSize, 9);
+  const page = ensureNumber(req.query.page, 1);
+  const category = ensureString(req.query.category);
+  const brand = ensureString(req.query.brand);
+  const searchQuery = ensureString(req.query.query);
+  const sortOrder = ensureString(req.query.sortOrder);
 
-    const category = req.query.category || "";
-    const brand = req.query.brand || "";
-    const searchQuery = req.query.query || "";
-    const sortOrder = req.query.sortOrder || "";
+  const queryFilter: Record<string, any> = searchQuery
+    ? {
+        name: {
+          $regex: searchQuery,
+          $options: "i",
+        },
+      }
+    : {};
+  const categoryFilter: Record<string, any> = category ? { category } : {};
+  const brandFilter: Record<string, any> = brand ? { brand } : {};
 
-    const queryFilter =
-      searchQuery && searchQuery !== "all"
-        ? {
-            name: {
-              $regex: searchQuery,
-              $options: "i",
-            },
-          }
-        : {};
-    const categoryFilter = category && category !== "all" ? { category } : {};
-    const brandFilter = brand && brand !== "all" ? { brand } : {};
-
-    let sortFilter = {};
-    if (sortOrder === "low") {
-      sortFilter = { price: 1 };
-    } else if (sortOrder === "high") {
-      sortFilter = { price: -1 };
-    }
-
-    const categories = await Product.find({}).distinct("category");
-    const brands = await Product.find({}).distinct("brand");
-    const productDocs = await Product.find({
-      ...queryFilter,
-      ...categoryFilter,
-      ...brandFilter,
-    })
-      .sort(sortFilter)
-      .skip(pageSize * (page - 1))
-      .limit(pageSize)
-      .lean();
-
-    const countProducts = await Product.countDocuments({
-      ...queryFilter,
-      ...categoryFilter,
-      ...brandFilter,
-    });
-
-    res.status(200).json({
-      countProducts,
-      productDocs,
-      categories,
-      brands,
-      page,
-      pages: Math.ceil(countProducts / pageSize),
-    });
+  let sortFilter: Record<string, 1 | -1> = {};
+  if (sortOrder === "low") {
+    sortFilter.price = 1;
+  } else if (sortOrder === "high") {
+    sortFilter.price = -1;
+  } else if (sortOrder === "rating") {
+    sortFilter = {}; // Will be replaced by the averageRating sort stage
+  } else if (sortOrder === "latest") {
+    sortFilter.createdAt = -1; // Sort by creation date, newest first
+  } else {
+    sortFilter.createdAt = 1; // Default sort by creation date, oldest first
   }
-);
+
+  const aggregationPipeline: PipelineStage[] = [
+    {
+      $match: {
+        ...queryFilter,
+        ...categoryFilter,
+        ...brandFilter,
+      },
+    },
+    {
+      $addFields: {
+        averageRating: { $avg: "$reviews.rating" },
+      },
+    },
+  ];
+
+  if (sortOrder === "rating") {
+    aggregationPipeline.push({ $sort: { averageRating: -1 } });
+  } else {
+    aggregationPipeline.push({ $sort: sortFilter });
+  }
+
+  aggregationPipeline.push(
+    { $skip: pageSize * (page - 1) },
+    { $limit: pageSize }
+  );
+
+  const productDocs = await Product.aggregate(aggregationPipeline);
+  const countProducts = await Product.countDocuments({
+    ...queryFilter,
+    ...categoryFilter,
+    ...brandFilter,
+  });
+
+  const categories = await Product.find({}).distinct("category");
+  const brands = await Product.find({}).distinct("brand");
+
+  res.status(200).json({
+    countProducts,
+    productDocs,
+    categories,
+    brands,
+    page,
+    pages: Math.ceil(countProducts / pageSize),
+  });
+});
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id
