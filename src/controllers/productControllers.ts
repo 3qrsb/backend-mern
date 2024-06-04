@@ -44,6 +44,8 @@ export const getProductSearch = asyncHandler(async (req: Request, res: Response)
   const brand = ensureString(req.query.brand);
   const searchQuery = ensureString(req.query.query);
   const sortOrder = ensureString(req.query.sortOrder);
+  const minPrice = ensureNumber(req.query.minPrice, 0);
+  const maxPrice = ensureNumber(req.query.maxPrice, Infinity);
 
   const queryFilter: Record<string, any> = searchQuery
     ? {
@@ -75,6 +77,7 @@ export const getProductSearch = asyncHandler(async (req: Request, res: Response)
         ...queryFilter,
         ...categoryFilter,
         ...brandFilter,
+        price: { $gte: minPrice, $lte: maxPrice }
       },
     },
     {

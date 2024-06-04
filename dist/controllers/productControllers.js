@@ -41,6 +41,8 @@ exports.getProductSearch = (0, express_async_handler_1.default)(async (req, res)
     const brand = ensureString(req.query.brand);
     const searchQuery = ensureString(req.query.query);
     const sortOrder = ensureString(req.query.sortOrder);
+    const minPrice = ensureNumber(req.query.minPrice, 0);
+    const maxPrice = ensureNumber(req.query.maxPrice, Infinity);
     const queryFilter = searchQuery
         ? {
             name: {
@@ -73,6 +75,7 @@ exports.getProductSearch = (0, express_async_handler_1.default)(async (req, res)
                 ...queryFilter,
                 ...categoryFilter,
                 ...brandFilter,
+                price: { $gte: minPrice, $lte: maxPrice }
             },
         },
         {
