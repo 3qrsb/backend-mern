@@ -7,6 +7,7 @@ import {
   deleteUser,
   updateUserProfile,
   promoteAdmin,
+  googleLogin,
 } from '../controllers/userControllers';
 import { admin, auth } from '../middleware/auth';
 
@@ -20,6 +21,7 @@ router
   .delete(auth, admin, deleteUser)
   .put(auth, updateUserProfile);
 router.route('/register').post(register);
+router.route('/google-login').post(googleLogin);
 router.route('/login').post(login);
 
 export default router;

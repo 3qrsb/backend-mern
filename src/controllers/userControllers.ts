@@ -4,6 +4,8 @@ import User from "../models/userModel";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/generateToken";
 import { sendVerificationEmail } from "./emailController";
+import * as jsonwebtoken from 'jsonwebtoken';
+
 
 // @desc    Register a new user
 // @route   POST /api/users/register
@@ -83,6 +85,64 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
+
+// @desc    Google Login
+// @route   POST /api/users/google-login
+// @access  Public
+
+export const googleLogin = asyncHandler(async (req: any, res: any) => {
+
+  const { credential: accessToken } = req.body;
+
+  if (!accessToken) {
+    return res.status(400).json({ message: "Missing access token." });
+  }
+
+  try {
+    // Decode the Google Sign-In token
+    const googleUser: any = jsonwebtoken.decode(accessToken);
+
+    // Check if user already exists in your database based on email or Google ID
+    const existingUser = await User.findOne({ email: googleUser.email });
+
+    let user;
+    if (existingUser) {
+      // User exists, update if necessary and return user information
+      user = existingUser;
+    } else {
+      // New user, create a new user in your database
+      user = new User({
+        name: googleUser.name,
+        email: googleUser.email,
+        password: googleUser.email,
+        isAdmin: false,
+        isVerified: false,
+
+      });
+      await user.save();
+    }
+
+    if (!user.isVerified) {
+      await sendVerificationEmail(user)
+    }
+
+    // Generate a secure token for the user
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      token,
+    });
+  } catch (error) {
+    console.error("Google Login verification failed:", error);
+    res.status(401).json({ message: "Invalid access token." });
+  }
+});
+
+
 // @desc    Get all users
 // @route   Get /api/users
 // @access  Admin
@@ -95,11 +155,11 @@ export const getUsersList = asyncHandler(async (req: Request, res: Response) => 
   const queryFilter =
     query && query !== "all"
       ? {
-          username: {
-            $regex: query,
-            $options: "i",
-          },
-        }
+        username: {
+          $regex: query,
+          $options: "i",
+        },
+      }
       : {};
 
   const users = await User.find({
