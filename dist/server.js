@@ -16,6 +16,7 @@ const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 const config_1 = __importDefault(require("./config"));
 const stripeRoutes_1 = __importDefault(require("./routes/stripeRoutes"));
+const verifyController_1 = require("./controllers/verifyController");
 dotenv_1.default.config({
     path: path_1.default.resolve(__dirname, '/.env'),
 });
@@ -33,6 +34,7 @@ app.use((req, res, next) => {
         express_1.default.json()(req, res, next);
     }
 });
+app.get('/api/verify/verify-email', verifyController_1.verifyEmail);
 app.use('/api/stripe', stripeRoutes_1.default);
 app.use('/api/products', productRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);

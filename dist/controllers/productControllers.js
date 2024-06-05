@@ -19,16 +19,31 @@ exports.getProductList = (0, express_async_handler_1.default)(async (req, res) =
         throw new Error("products not found!");
     }
 });
+// Utility function to ensure a query parameter is a string
+const ensureString = (param) => {
+    if (Array.isArray(param)) {
+        return param[0];
+    }
+    return typeof param === 'string' ? param : '';
+};
+// Utility function to ensure query parameter is a number
+const ensureNumber = (param, defaultValue) => {
+    const num = Number(param);
+    return isNaN(num) ? defaultValue : num;
+};
 // @desc   Fetch all products with pages for pagination category brand for filter and searchQuery for search
 // @route   GET /api/products/search
 // @access  Public
 exports.getProductSearch = (0, express_async_handler_1.default)(async (req, res) => {
-    const pageSize = req.query.pageSize || 9;
-    const page = req.query.page || 1;
-    const category = req.query.category || "";
-    const brand = req.query.brand || "";
-    const searchQuery = req.query.query || "";
-    const queryFilter = searchQuery && searchQuery !== "all"
+    const pageSize = ensureNumber(req.query.pageSize, 9);
+    const page = ensureNumber(req.query.page, 1);
+    const category = ensureString(req.query.category);
+    const brand = ensureString(req.query.brand);
+    const searchQuery = ensureString(req.query.query);
+    const sortOrder = ensureString(req.query.sortOrder);
+    const minPrice = ensureNumber(req.query.minPrice, 0);
+    const maxPrice = ensureNumber(req.query.maxPrice, Infinity);
+    const queryFilter = searchQuery
         ? {
             name: {
                 $regex: searchQuery,
@@ -36,23 +51,54 @@ exports.getProductSearch = (0, express_async_handler_1.default)(async (req, res)
             },
         }
         : {};
-    const categoryFilter = category && category !== "all" ? { category } : {};
-    const brandFilter = brand && brand !== "all" ? { brand } : {};
-    const categories = await productModel_1.default.find({}).distinct("category");
-    const brands = await productModel_1.default.find({}).distinct("brand");
-    const productDocs = await productModel_1.default.find({
-        ...queryFilter,
-        ...categoryFilter,
-        ...brandFilter,
-    })
-        .skip(pageSize * (page - 1))
-        .limit(pageSize)
-        .lean();
+    const categoryFilter = category ? { category } : {};
+    const brandFilter = brand ? { brand } : {};
+    let sortFilter = {};
+    if (sortOrder === "low") {
+        sortFilter.price = 1;
+    }
+    else if (sortOrder === "high") {
+        sortFilter.price = -1;
+    }
+    else if (sortOrder === "rating") {
+        sortFilter = {}; // Will be replaced by the averageRating sort stage
+    }
+    else if (sortOrder === "latest") {
+        sortFilter.createdAt = -1; // Sort by creation date, newest first
+    }
+    else {
+        sortFilter.createdAt = 1; // Default sort by creation date, oldest first
+    }
+    const aggregationPipeline = [
+        {
+            $match: {
+                ...queryFilter,
+                ...categoryFilter,
+                ...brandFilter,
+                price: { $gte: minPrice, $lte: maxPrice }
+            },
+        },
+        {
+            $addFields: {
+                averageRating: { $avg: "$reviews.rating" },
+            },
+        },
+    ];
+    if (sortOrder === "rating") {
+        aggregationPipeline.push({ $sort: { averageRating: -1 } });
+    }
+    else {
+        aggregationPipeline.push({ $sort: sortFilter });
+    }
+    aggregationPipeline.push({ $skip: pageSize * (page - 1) }, { $limit: pageSize });
+    const productDocs = await productModel_1.default.aggregate(aggregationPipeline);
     const countProducts = await productModel_1.default.countDocuments({
         ...queryFilter,
         ...categoryFilter,
         ...brandFilter,
     });
+    const categories = await productModel_1.default.find({}).distinct("category");
+    const brands = await productModel_1.default.find({}).distinct("brand");
     res.status(200).json({
         countProducts,
         productDocs,
