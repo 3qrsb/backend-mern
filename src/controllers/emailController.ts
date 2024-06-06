@@ -68,7 +68,7 @@ const transporter = nodemailer.createTransport({
       subject: 'Email Verification',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px;">
-          <h2 style="color: #333;">Email Verification</h2>
+          <h2 style="color: #333; text-align: center;">Email Verification</h2>
           <p style="font-size: 16px; color: #555;">
             Hi ${user.name},
           </p>

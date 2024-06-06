@@ -12,7 +12,7 @@ import path from 'path';
 import sanitizedConfig from './config';
 import stripeRoutes from './routes/stripeRoutes';
 import { verifyEmail } from './controllers/verifyController';
-import { forgotPassword, resetPassword } from './controllers/authController';
+import { forgotPassword, resetPassword } from './controllers/resetPasswordController';
 
 dotenv.config({
   path: path.resolve(__dirname, '/.env'),
