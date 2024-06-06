@@ -1,14 +1,38 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.promoteAdmin = exports.updateUserProfile = exports.getUserBydId = exports.getUsersList = exports.login = exports.register = void 0;
+exports.deleteUser = exports.promoteAdmin = exports.updateUserProfile = exports.getUserBydId = exports.getUsersList = exports.googleLogin = exports.login = exports.register = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const userModel_1 = __importDefault(require("../models/userModel"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const generateToken_1 = __importDefault(require("../utils/generateToken"));
 const emailController_1 = require("./emailController");
+const jsonwebtoken = __importStar(require("jsonwebtoken"));
 // @desc    Register a new user
 // @route   POST /api/users/register
 // @access  Public
@@ -25,7 +49,7 @@ exports.register = (0, express_async_handler_1.default)(async (req, res) => {
     }
     const exist = await userModel_1.default.findOne({ email });
     if (exist) {
-        res.status(422).json({ message: "email already been used!" });
+        res.status(422).json({ message: "Email already have been used!" });
         return;
     }
     const user = new userModel_1.default({
@@ -75,6 +99,49 @@ exports.login = (0, express_async_handler_1.default)(async (req, res) => {
     }
     else {
         res.status(404).json({ message: "User not found." });
+    }
+});
+// @desc    Google Login
+// @route   POST /api/users/google-login
+// @access  Public
+exports.googleLogin = (0, express_async_handler_1.default)(async (req, res) => {
+    const { credential: accessToken } = req.body;
+    if (!accessToken) {
+        return res.status(400).json({ message: "Missing access token." });
+    }
+    try {
+        // Decode the Google Sign-In token
+        const googleUser = jsonwebtoken.decode(accessToken);
+        // Check if user already exists in your database based on email or Google ID
+        const existingUser = await userModel_1.default.findOne({ email: googleUser.email });
+        if (existingUser) {
+            // User exists, return an error indicating that the email is already in use
+            return res.status(422).json({ message: "Email already in use." });
+        }
+        // New user, create a new user in your database
+        const user = new userModel_1.default({
+            name: googleUser.name,
+            email: googleUser.email,
+            password: googleUser.email,
+            isAdmin: false,
+            isVerified: false,
+        });
+        await user.save();
+        // Send verification email
+        await (0, emailController_1.sendVerificationEmail)(user);
+        // Generate a secure token for the user
+        const token = (0, generateToken_1.default)(user._id);
+        res.status(200).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            token,
+        });
+    }
+    catch (error) {
+        console.error("Google Login verification failed:", error);
+        res.status(401).json({ message: "Invalid access token." });
     }
 });
 // @desc    Get all users

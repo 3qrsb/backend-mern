@@ -27,7 +27,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const exist = await User.findOne({ email });
 
   if (exist) {
-    res.status(422).json({ message: "email already been used!" });
+    res.status(422).json({ message: "Email already have been used!" });
     return;
   }
 
@@ -91,7 +91,6 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 // @access  Public
 
 export const googleLogin = asyncHandler(async (req: any, res: any) => {
-
   const { credential: accessToken } = req.body;
 
   if (!accessToken) {
@@ -105,26 +104,24 @@ export const googleLogin = asyncHandler(async (req: any, res: any) => {
     // Check if user already exists in your database based on email or Google ID
     const existingUser = await User.findOne({ email: googleUser.email });
 
-    let user;
     if (existingUser) {
-      // User exists, update if necessary and return user information
-      user = existingUser;
-    } else {
-      // New user, create a new user in your database
-      user = new User({
-        name: googleUser.name,
-        email: googleUser.email,
-        password: googleUser.email,
-        isAdmin: false,
-        isVerified: false,
-
-      });
-      await user.save();
+      // User exists, return an error indicating that the email is already in use
+      return res.status(422).json({ message: "Email already in use." });
     }
 
-    if (!user.isVerified) {
-      await sendVerificationEmail(user)
-    }
+    // New user, create a new user in your database
+    const user = new User({
+      name: googleUser.name,
+      email: googleUser.email,
+      password: googleUser.email,
+      isAdmin: false,
+      isVerified: false,
+    });
+
+    await user.save();
+
+    // Send verification email
+    await sendVerificationEmail(user);
 
     // Generate a secure token for the user
     const token = generateToken(user._id);
