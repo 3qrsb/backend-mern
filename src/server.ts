@@ -12,6 +12,7 @@ import path from 'path';
 import sanitizedConfig from './config';
 import stripeRoutes from './routes/stripeRoutes';
 import { verifyEmail } from './controllers/verifyController';
+import { forgotPassword, resetPassword } from './controllers/authController';
 
 dotenv.config({
   path: path.resolve(__dirname, '/.env'),
@@ -34,6 +35,8 @@ app.use((req, res, next) => {
   }
 });
 
+app.post('/api/forgot-password', forgotPassword)
+app.post('/api/reset-password', resetPassword)
 app.get('/api/verify/verify-email', verifyEmail);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/products', productRoutes);

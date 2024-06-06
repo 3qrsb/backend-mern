@@ -10,6 +10,8 @@ export interface IUser {
   isVerified: boolean;
   verificationToken?: string | null;
   verificationTokenExpires?: Date | null;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: number;
 }
 
 const userSchema = new Schema<IUser>(
@@ -21,6 +23,8 @@ const userSchema = new Schema<IUser>(
     isVerified: { type: Boolean, default: false },
     verificationToken: { type: String },
     verificationTokenExpires: { type: Date },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   {
     timestamps: true,
