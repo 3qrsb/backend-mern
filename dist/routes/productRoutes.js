@@ -10,6 +10,7 @@ const router = express_1.default.Router();
 router.route('/').get(productControllers_1.getProductList).post(auth_1.auth, auth_1.admin, productControllers_1.createProduct);
 router.route('/:id/reviews').post(auth_1.auth, productControllers_1.createReview);
 router.route('/search').get(productControllers_1.getProductSearch);
+router.route('/top-selling').get(productControllers_1.getTopSellingProducts);
 router
     .route('/:id')
     .get(productControllers_1.getProductById)

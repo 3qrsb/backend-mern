@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createOrder = exports.deleteOrder = exports.getOrderById = exports.payOrder = exports.getUserOrder = exports.getOrderList = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const orderModel_1 = __importDefault(require("../models/orderModel"));
+const productModel_1 = __importDefault(require("../models/productModel"));
 // @desc    get all orders
 // @route   Get /api/orders
 // @access  Admin
@@ -87,15 +88,32 @@ exports.createOrder = (0, express_async_handler_1.default)(async (req, res) => {
         user: req.user._id,
     });
     if (cartItems.length === 0) {
-        res.status(400);
-        throw new Error("No order items");
+        res.status(400).json({ message: "No order items" });
+        return;
     }
     if (order) {
         const newOrder = await order.save();
+        // Log the cart items for debugging
+        console.log("Cart Items: ", cartItems);
+        // Update total sales for each product in the order
+        await Promise.all(cartItems.map(async (item) => {
+            const product = await productModel_1.default.findById(item._id); // Access the correct field for product ID
+            if (product) {
+                console.log(`Updating totalSales for product: ${product.name}`);
+                product.totalSales += item.qty;
+                await product.save().then(savedProduct => {
+                    console.log(`Product saved: ${savedProduct.name} with new totalSales: ${savedProduct.totalSales}`);
+                }).catch(error => {
+                    console.error('Error saving product:', error);
+                });
+            }
+            else {
+                console.log(`Product not found: ${item._id}`);
+            }
+        }));
         res.status(201).json(newOrder);
     }
     else {
-        res.status(400);
-        throw new Error("order not found!");
+        res.status(400).json({ message: "Order not found!" });
     }
 });

@@ -6,6 +6,7 @@ import {
   getProductById,
   getProductList,
   getProductSearch,
+  getTopSellingProducts,
   updateProduct,
 } from '../controllers/productControllers';
 import { admin, auth } from '../middleware/auth';
@@ -14,6 +15,7 @@ const router = express.Router();
 router.route('/').get(getProductList).post(auth, admin, createProduct);
 router.route('/:id/reviews').post(auth, createReview);
 router.route('/search').get(getProductSearch);
+router.route('/top-selling').get(getTopSellingProducts);
 router
   .route('/:id')
   .get(getProductById)

@@ -18,6 +18,7 @@ const productSchema = new mongoose_1.Schema({
     description: { type: String, required: true },
     qty: Number,
     reviews: [reviewSchema],
+    totalSales: { type: Number, default: 0 }, // Add this field
 }, {
     timestamps: true,
 });

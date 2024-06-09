@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Order from "../models/orderModel";
+import Product from "../models/productModel";
 
 // @desc    get all orders
 // @route   Get /api/orders
@@ -100,15 +101,36 @@ export const createOrder = asyncHandler(async (req: any, res: Response) => {
   });
 
   if (cartItems.length === 0) {
-    res.status(400);
-    throw new Error("No order items");
+    res.status(400).json({ message: "No order items" });
+    return;
   }
 
   if (order) {
     const newOrder = await order.save();
+
+    // Log the cart items for debugging
+    console.log("Cart Items: ", cartItems);
+
+    // Update total sales for each product in the order
+    await Promise.all(
+      cartItems.map(async (item: any) => {
+        const product = await Product.findById(item._id); // Access the correct field for product ID
+        if (product) {
+          console.log(`Updating totalSales for product: ${product.name}`);
+          product.totalSales += item.qty;
+          await product.save().then(savedProduct => {
+            console.log(`Product saved: ${savedProduct.name} with new totalSales: ${savedProduct.totalSales}`);
+          }).catch(error => {
+            console.error('Error saving product:', error);
+          });
+        } else {
+          console.log(`Product not found: ${item._id}`);
+        }
+      })
+    );
+
     res.status(201).json(newOrder);
   } else {
-    res.status(400);
-    throw new Error("order not found!");
+    res.status(400).json({ message: "Order not found!" });
   }
 });

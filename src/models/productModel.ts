@@ -16,9 +16,9 @@ interface IProduct {
   description: string;
   qty?: number;
   reviews: Review[];
+  totalSales: number; // Add this field
   // _id: string;
 }
-
 
 const reviewSchema = new Schema<Review>(
   {
@@ -42,6 +42,7 @@ const productSchema = new Schema<IProduct>(
     description: { type: String, required: true },
     qty: Number,
     reviews: [reviewSchema],
+    totalSales: { type: Number, default: 0 }, // Add this field
   },
   {
     timestamps: true,
