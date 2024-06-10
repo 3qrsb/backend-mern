@@ -91,48 +91,59 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 // @route   POST /api/users/google-login
 // @access  Public
 
-export const googleLogin = asyncHandler(async (req: any, res: any) => {
-  const { credential: accessToken } = req.body;
+export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
+  const { credential: token } = req.body;
 
-  if (!accessToken) {
-    return res.status(400).json({ message: "Missing access token." });
+  if (!token) {
+    res.status(400).json({ message: "Missing access token." });
+    return;
   }
 
   try {
     // Decode the Google Sign-In token
-    const googleUser: any = jsonwebtoken.decode(accessToken);
+    const googleUser: any = jsonwebtoken.decode(token);
 
-    // Check if user already exists in your database based on email or Google ID
+    if (!googleUser || !googleUser.email) {
+      res.status(401).json({ message: "Invalid Google token." });
+      return;
+    }
+
+    // Check if user already exists in your database based on email
     const existingUser = await User.findOne({ email: googleUser.email });
 
     if (existingUser) {
-      // User exists, return an error indicating that the email is already in use
-      return res.status(422).json({ message: "Email already in use." });
+      // User exists, generate a token and return user details to automatically sign in
+      const jwtToken = generateToken(existingUser._id);
+      res.status(200).json({
+        _id: existingUser._id,
+        name: existingUser.name,
+        email: existingUser.email,
+        isAdmin: existingUser.isAdmin,
+        token: jwtToken,
+      });
+      return;
     }
 
     // New user, create a new user in your database
     const user = new User({
       name: googleUser.name,
       email: googleUser.email,
-      password: googleUser.email,
+      password: googleUser.email, // It's better to generate a random password here
       isAdmin: false,
-      isVerified: false,
+      isVerified: true, // Set isVerified to true for Google sign-in
     });
 
     await user.save();
 
-    // Send verification email
-    await sendVerificationEmail(user);
-
     // Generate a secure token for the user
-    const token = generateToken(user._id);
+    const jwtToken = generateToken(user._id);
 
     res.status(200).json({
       _id: user._id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
-      token,
+      token: jwtToken,
     });
   } catch (error) {
     console.error("Google Login verification failed:", error);
@@ -198,7 +209,7 @@ export const getUserBydId = asyncHandler(
     if (user) {
       res.status(200).json(user);
     } else {
-      res.status(400);
+      res.status(404);
       throw new Error("user not found!");
     }
   }
