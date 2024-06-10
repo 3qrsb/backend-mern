@@ -9,17 +9,17 @@ import {
   getTopSellingProducts,
   updateProduct,
 } from '../controllers/productControllers';
-import { admin, auth } from '../middleware/auth';
+import { admin, auth, adminOrSeller } from '../middleware/auth';
 const router = express.Router();
 
-router.route('/').get(getProductList).post(auth, admin, createProduct);
+router.route('/').get(getProductList).post(auth, adminOrSeller, createProduct);
 router.route('/:id/reviews').post(auth, createReview);
 router.route('/search').get(getProductSearch);
 router.route('/top-selling').get(getTopSellingProducts);
 router
   .route('/:id')
   .get(getProductById)
-  .put(auth, admin, updateProduct)
-  .delete(auth, admin, deleteProduct);
+  .put(auth, adminOrSeller, updateProduct)
+  .delete(auth, adminOrSeller, deleteProduct);
 
 export default router;

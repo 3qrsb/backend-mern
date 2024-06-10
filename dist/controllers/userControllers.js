@@ -91,6 +91,7 @@ exports.login = (0, express_async_handler_1.default)(async (req, res) => {
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
+                isSeller: user.isSeller,
                 token: (0, generateToken_1.default)(user._id),
             });
         }
@@ -128,6 +129,7 @@ exports.googleLogin = (0, express_async_handler_1.default)(async (req, res) => {
                 name: existingUser.name,
                 email: existingUser.email,
                 isAdmin: existingUser.isAdmin,
+                isSeller: existingUser.isSeller,
                 token: jwtToken,
             });
             return;
@@ -138,6 +140,7 @@ exports.googleLogin = (0, express_async_handler_1.default)(async (req, res) => {
             email: googleUser.email,
             password: googleUser.email,
             isAdmin: false,
+            isSeller: false,
             isVerified: true, // Set isVerified to true for Google sign-in
         });
         await user.save();
@@ -148,6 +151,7 @@ exports.googleLogin = (0, express_async_handler_1.default)(async (req, res) => {
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
+            isSeller: user.isSeller,
             token: jwtToken,
         });
     }

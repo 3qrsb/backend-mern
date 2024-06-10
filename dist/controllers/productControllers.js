@@ -123,7 +123,7 @@ exports.getProductById = (0, express_async_handler_1.default)(async (req, res) =
 });
 // @desc    Create a product
 // @route   POST /api/products
-// @access  Private/Admin
+// @access  Private/Admin or Private/Seller
 exports.createProduct = (0, express_async_handler_1.default)(async (req, res) => {
     const { name, image, description, brand, category, price, qty } = req.body;
     try {
@@ -135,6 +135,7 @@ exports.createProduct = (0, express_async_handler_1.default)(async (req, res) =>
             category,
             price,
             qty,
+            user: req.user._id,
         });
         const newProduct = await product.save();
         res.status(201).json(newProduct);
@@ -151,29 +152,43 @@ exports.createProduct = (0, express_async_handler_1.default)(async (req, res) =>
 });
 // @desc    Update a product
 // @route   PUT /api/products/:id
-// @access  Private/Admin
+// @access  Private/Admin or Private/Seller (only their own products)
 exports.updateProduct = (0, express_async_handler_1.default)(async (req, res) => {
-    const product = await productModel_1.default.findByIdAndUpdate(req.params.id, req.body);
+    const product = await productModel_1.default.findById(req.params.id);
     if (product) {
-        res.status(200).json("Product has been updated");
+        const user = req.user;
+        // Check if the user is the owner or admin
+        if (!product.user || product.user.equals(user._id) || user.isAdmin) {
+            Object.assign(product, req.body);
+            await product.save();
+            res.status(200).json("Product has been updated");
+        }
+        else {
+            res.status(403).json({ message: "Not authorized to update this product" });
+        }
     }
     else {
-        res.status(400);
-        throw new Error("products not found!");
+        res.status(404).json({ message: "Product not found" });
     }
 });
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
-// @access  Private/Admin
+// @access  Private/Admin or Private/Seller (only their own products)
 exports.deleteProduct = (0, express_async_handler_1.default)(async (req, res) => {
     const product = await productModel_1.default.findById(req.params.id);
     if (product) {
-        await product.remove();
-        res.status(200).json("Product has been deleted");
+        const user = req.user;
+        // Check if the user is the owner or admin
+        if (!product.user || product.user.equals(user._id) || user.isAdmin) {
+            await product.remove();
+            res.status(200).json("Product has been deleted");
+        }
+        else {
+            res.status(403).json({ message: "Not authorized to delete this product" });
+        }
     }
     else {
-        res.status(400);
-        throw new Error("products not found!");
+        res.status(404).json({ message: "Product not found" });
     }
 });
 // @desc    Create review

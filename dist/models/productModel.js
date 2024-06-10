@@ -18,7 +18,8 @@ const productSchema = new mongoose_1.Schema({
     description: { type: String, required: true },
     qty: Number,
     reviews: [reviewSchema],
-    totalSales: { type: Number, default: 0 }, // Add this field
+    totalSales: { type: Number, default: 0 },
+    user: { type: mongoose_1.Schema.Types.ObjectId, required: true, ref: "User" },
 }, {
     timestamps: true,
 });

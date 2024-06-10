@@ -76,6 +76,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        isSeller: user.isSeller,
         token: generateToken(user._id),
       });
     } else {
@@ -119,6 +120,7 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
         name: existingUser.name,
         email: existingUser.email,
         isAdmin: existingUser.isAdmin,
+        isSeller: existingUser.isSeller,
         token: jwtToken,
       });
       return;
@@ -130,6 +132,7 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
       email: googleUser.email,
       password: googleUser.email, // It's better to generate a random password here
       isAdmin: false,
+      isSeller: false,
       isVerified: true, // Set isVerified to true for Google sign-in
     });
 
@@ -143,6 +146,7 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      isSeller: user.isSeller,
       token: jwtToken,
     });
   } catch (error) {

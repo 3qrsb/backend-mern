@@ -48,3 +48,14 @@ export const admin = asyncHandler(
     }
   }
 );
+
+export const adminOrSeller = asyncHandler(
+  async (req: RequestWithUser | any, res: Response, next: NextFunction) => {
+    if (req.user && (req.user.isAdmin || req.user.isSeller)) {
+      next();
+    } else {
+      res.status(401);
+      throw new Error('Not authorized as an admin or seller');
+    }
+  }
+);

@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import mongoose, { Schema, model, Types } from "mongoose";
 
 type Review = {
   name: string;
@@ -16,7 +16,8 @@ interface IProduct {
   description: string;
   qty?: number;
   reviews: Review[];
-  totalSales: number; // Add this field
+  totalSales: number;
+  user: Types.ObjectId;
   // _id: string;
 }
 
@@ -42,7 +43,8 @@ const productSchema = new Schema<IProduct>(
     description: { type: String, required: true },
     qty: Number,
     reviews: [reviewSchema],
-    totalSales: { type: Number, default: 0 }, // Add this field
+    totalSales: { type: Number, default: 0 },
+    user: { type: Schema.Types.ObjectId, required: true, ref: "User" },
   },
   {
     timestamps: true,

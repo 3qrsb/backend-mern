@@ -11,6 +11,11 @@ const userSchema = new mongoose_1.Schema({
     password: { type: String, required: true },
     isAdmin: { type: Boolean, required: true, default: false },
     isVerified: { type: Boolean, default: false },
+    isSeller: {
+        type: Boolean,
+        required: true,
+        default: false,
+    },
     verificationToken: { type: String },
     verificationTokenExpires: { type: Date },
     resetPasswordToken: { type: String },

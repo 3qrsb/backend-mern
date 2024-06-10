@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.admin = exports.auth = void 0;
+exports.adminOrSeller = exports.admin = exports.auth = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const userModel_1 = __importDefault(require("../models/userModel"));
@@ -36,5 +36,14 @@ exports.admin = (0, express_async_handler_1.default)(async (req, res, next) => {
     else {
         res.status(401);
         throw new Error('Not authorized, no admin');
+    }
+});
+exports.adminOrSeller = (0, express_async_handler_1.default)(async (req, res, next) => {
+    if (req.user && (req.user.isAdmin || req.user.isSeller)) {
+        next();
+    }
+    else {
+        res.status(401);
+        throw new Error('Not authorized as an admin or seller');
     }
 });

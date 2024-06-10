@@ -137,7 +137,7 @@ export const getProductById = asyncHandler(
 
 // @desc    Create a product
 // @route   POST /api/products
-// @access  Private/Admin
+// @access  Private/Admin or Private/Seller
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response) => {
@@ -152,6 +152,7 @@ export const createProduct = asyncHandler(
         category,
         price,
         qty,
+        user: (req as any).user._id,
       });
 
       const newProduct = await product.save();
@@ -169,38 +170,48 @@ export const createProduct = asyncHandler(
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
-// @access  Private/Admin
+// @access  Private/Admin or Private/Seller (only their own products)
 
-export const updateProduct = asyncHandler(
-  async (req: Request, res: Response) => {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body);
+export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
+  const product = await Product.findById(req.params.id);
 
-    if (product) {
+  if (product) {
+    const user = (req as any).user;
+
+    // Check if the user is the owner or admin
+    if (!product.user || product.user.equals(user._id) || user.isAdmin) {
+      Object.assign(product, req.body);
+      await product.save();
       res.status(200).json("Product has been updated");
     } else {
-      res.status(400);
-      throw new Error("products not found!");
+      res.status(403).json({ message: "Not authorized to update this product" });
     }
+  } else {
+    res.status(404).json({ message: "Product not found" });
   }
-);
+});
 
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
-// @access  Private/Admin
+// @access  Private/Admin or Private/Seller (only their own products)
 
-export const deleteProduct = asyncHandler(
-  async (req: Request, res: Response) => {
-    const product = await Product.findById(req.params.id);
+export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
+  const product = await Product.findById(req.params.id);
 
-    if (product) {
+  if (product) {
+    const user = (req as any).user;
+
+    // Check if the user is the owner or admin
+    if (!product.user || product.user.equals(user._id) || user.isAdmin) {
       await product.remove();
       res.status(200).json("Product has been deleted");
     } else {
-      res.status(400);
-      throw new Error("products not found!");
+      res.status(403).json({ message: "Not authorized to delete this product" });
     }
+  } else {
+    res.status(404).json({ message: "Product not found" });
   }
-);
+});
 
 // @desc    Create review
 // @route   POST /api/products/:id/reviews
