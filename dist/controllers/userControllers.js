@@ -26,8 +26,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.promoteAdmin = exports.updateUserProfile = exports.getUserBydId = exports.getUsersList = exports.googleLogin = exports.login = exports.register = void 0;
+exports.getNewCustomersThisMonth = exports.deleteUser = exports.promoteAdmin = exports.updateUserProfile = exports.getUserBydId = exports.getUsersList = exports.googleLogin = exports.login = exports.register = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
+const date_fns_1 = require("date-fns");
 const userModel_1 = __importDefault(require("../models/userModel"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const generateToken_1 = __importDefault(require("../utils/generateToken"));
@@ -243,4 +244,15 @@ exports.deleteUser = (0, express_async_handler_1.default)(async (req, res) => {
         res.status(400);
         throw new Error("User not found!");
     }
+});
+// @desc    Get new customers for the current month
+// @route   GET /api/users/new-customers
+// @access  Admin
+exports.getNewCustomersThisMonth = (0, express_async_handler_1.default)(async (req, res) => {
+    const start = (0, date_fns_1.startOfMonth)(new Date());
+    const end = (0, date_fns_1.endOfMonth)(new Date());
+    const newCustomers = await userModel_1.default.countDocuments({
+        createdAt: { $gte: start, $lte: end },
+    });
+    res.status(200).json({ count: newCustomers });
 });

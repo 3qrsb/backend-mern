@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
+import { startOfMonth, endOfMonth } from "date-fns";
 import User from "../models/userModel";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/generateToken";
@@ -259,3 +260,20 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("User not found!");
   }
 });
+
+// @desc    Get new customers for the current month
+// @route   GET /api/users/new-customers
+// @access  Admin
+
+export const getNewCustomersThisMonth = asyncHandler(
+  async (req: Request, res: Response) => {
+    const start = startOfMonth(new Date());
+    const end = endOfMonth(new Date());
+
+    const newCustomers = await User.countDocuments({
+      createdAt: { $gte: start, $lte: end },
+    });
+
+    res.status(200).json({ count: newCustomers });
+  }
+);

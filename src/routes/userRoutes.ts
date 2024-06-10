@@ -8,12 +8,14 @@ import {
   updateUserProfile,
   promoteAdmin,
   googleLogin,
+  getNewCustomersThisMonth,
 } from '../controllers/userControllers';
 import { admin, auth } from '../middleware/auth';
 
 const router = express.Router();
 
 router.route('/').get(getUsersList);
+router.get('/new-customers', auth, admin, getNewCustomersThisMonth);
 router.route('/promote/:id').post(auth, admin, promoteAdmin);
 router
   .route('/:id')
