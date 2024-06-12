@@ -1,46 +1,36 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
+import DataUriParser from 'datauri/parser';
+import cloudinary from '../config/cloudinary';
 
 const router = express.Router();
+const parser = new DataUriParser();
 
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename(req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
-    );
-  },
-});
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-function checkFileType(file: any, cb: any) {
-  const filetypes = /jpg|jpeg|png/;
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype);
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    cb('Images only!');
+const uploadImageToCloudinary = async (fileBuffer: Buffer, fileName: string) => {
+  const dataUri = parser.format(path.extname(fileName).toString(), fileBuffer);
+  if (!dataUri.content) {
+    throw new Error('Invalid file format');
   }
-}
+  return cloudinary.uploader.upload(dataUri.content, {
+    folder: 'product_images',
+  });
+};
 
-const uploadImg = multer({
-  storage,
-  fileFilter: function (req, file, cb) {
-    checkFileType(file, cb);
-  },
-});
+router.post('/image', upload.single('image'), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send({ error: 'No file uploaded' });
+    }
 
-// @desc    upload image
-// @route   Post /api/image
-// @access  Private
-
-router.post('/image', uploadImg.single('image'), (req: any, res) => {
-  res.send(`/${req.file?.path}`);
+    const result = await uploadImageToCloudinary(req.file.buffer, req.file.originalname);
+    res.send({ url: result.secure_url });
+  } catch (error) {
+    res.status(500).send({ error: 'Image upload failed' });
+  }
 });
 
 export default router;

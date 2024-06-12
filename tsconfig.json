@@ -10,8 +10,5 @@
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["src/**/*.ts"],
-  "paths": {
-    "@/*": ["uploads/*"]
-  }
+  "include": ["src/**/*.ts"]
 }

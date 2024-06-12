@@ -15,12 +15,12 @@ import { verifyEmail } from './controllers/verifyController';
 import { forgotPassword, resetPassword } from './controllers/resetPasswordController';
 
 dotenv.config({
-  path: path.resolve(__dirname, '/.env'),
+  path: path.resolve(__dirname, '.env'),
 });
 
 connectDb();
 
-const app = express();
+const app: Application = express();
 
 if (sanitizedConfig.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -35,16 +35,14 @@ app.use((req, res, next) => {
   }
 });
 
-app.post('/api/forgot-password', forgotPassword)
-app.post('/api/reset-password', resetPassword)
+app.post('/api/forgot-password', forgotPassword);
+app.post('/api/reset-password', resetPassword);
 app.get('/api/verify/verify-email', verifyEmail);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/uploads', uploadRoutes);
-
-app.use('/uploads', express.static(path.join(process.cwd(), '/uploads')));
 
 app.use(notFound);
 app.use(errorHandler);

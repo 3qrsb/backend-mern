@@ -19,7 +19,7 @@ const stripeRoutes_1 = __importDefault(require("./routes/stripeRoutes"));
 const verifyController_1 = require("./controllers/verifyController");
 const resetPasswordController_1 = require("./controllers/resetPasswordController");
 dotenv_1.default.config({
-    path: path_1.default.resolve(__dirname, '/.env'),
+    path: path_1.default.resolve(__dirname, '.env'),
 });
 (0, db_1.default)();
 const app = (0, express_1.default)();
@@ -43,7 +43,6 @@ app.use('/api/products', productRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);
 app.use('/api/orders', orderRoutes_1.default);
 app.use('/api/uploads', uploadRoutes_1.default);
-app.use('/uploads', express_1.default.static(path_1.default.join(process.cwd(), '/uploads')));
 app.use(errorMiddleware_1.notFound);
 app.use(errorMiddleware_1.errorHandler);
 const PORT = process.env.PORT || 4000;
