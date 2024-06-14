@@ -141,7 +141,7 @@ export const getProductById = asyncHandler(
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const { name, images, description, brand, category, price, qty } = req.body;
+    const { name, images, description, brand, category, price, qty, inStock } = req.body;
 
     try {
       const product = new Product({
@@ -152,6 +152,7 @@ export const createProduct = asyncHandler(
         category,
         price,
         qty,
+        inStock,  // Add this line
         user: (req as any).user._id,
       });
 

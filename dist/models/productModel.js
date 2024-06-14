@@ -20,6 +20,7 @@ const productSchema = new mongoose_1.Schema({
     reviews: [reviewSchema],
     totalSales: { type: Number, default: 0 },
     user: { type: mongoose_1.Schema.Types.ObjectId, required: true, ref: "User" },
+    inStock: { type: Boolean, default: true },
 }, {
     timestamps: true,
 });

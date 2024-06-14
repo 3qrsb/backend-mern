@@ -18,6 +18,7 @@ interface IProduct {
   reviews: Review[];
   totalSales: number;
   user: Types.ObjectId;
+  inStock: boolean; 
   // _id: string;
 }
 
@@ -45,6 +46,7 @@ const productSchema = new Schema<IProduct>(
     reviews: [reviewSchema],
     totalSales: { type: Number, default: 0 },
     user: { type: Schema.Types.ObjectId, required: true, ref: "User" },
+    inStock: { type: Boolean, default: true },
   },
   {
     timestamps: true,

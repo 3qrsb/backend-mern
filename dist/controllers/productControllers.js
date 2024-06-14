@@ -125,7 +125,7 @@ exports.getProductById = (0, express_async_handler_1.default)(async (req, res) =
 // @route   POST /api/products
 // @access  Private/Admin or Private/Seller
 exports.createProduct = (0, express_async_handler_1.default)(async (req, res) => {
-    const { name, images, description, brand, category, price, qty } = req.body;
+    const { name, images, description, brand, category, price, qty, inStock } = req.body;
     try {
         const product = new productModel_1.default({
             name,
@@ -135,6 +135,7 @@ exports.createProduct = (0, express_async_handler_1.default)(async (req, res) =>
             category,
             price,
             qty,
+            inStock,
             user: req.user._id,
         });
         const newProduct = await product.save();
