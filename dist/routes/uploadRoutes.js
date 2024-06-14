@@ -18,18 +18,22 @@ const uploadImageToCloudinary = async (fileBuffer, fileName) => {
         throw new Error('Invalid file format');
     }
     return cloudinary_1.default.uploader.upload(dataUri.content, {
-        folder: 'product_images',
+        folder: 'product_images', // optional, specify a folder in Cloudinary
     });
 };
-router.post('/image', upload.single('image'), async (req, res) => {
+router.post('/image', upload.array('images', 10), async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).send({ error: 'No file uploaded' });
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).send({ error: 'No files uploaded' });
         }
-        const result = await uploadImageToCloudinary(req.file.buffer, req.file.originalname);
-        res.send({ url: result.secure_url });
+        const files = req.files;
+        const uploadPromises = files.map(file => uploadImageToCloudinary(file.buffer, file.originalname));
+        const results = await Promise.all(uploadPromises);
+        const urls = results.map(result => result.secure_url);
+        res.send({ urls });
     }
     catch (error) {
+        console.error(error); // Log the error for debugging
         res.status(500).send({ error: 'Image upload failed' });
     }
 });

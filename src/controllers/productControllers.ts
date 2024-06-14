@@ -141,12 +141,12 @@ export const getProductById = asyncHandler(
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const { name, image, description, brand, category, price, qty } = req.body;
+    const { name, images, description, brand, category, price, qty } = req.body;
 
     try {
       const product = new Product({
         name,
-        image,
+        images,
         description,
         brand,
         category,
