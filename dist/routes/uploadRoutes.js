@@ -13,15 +13,17 @@ const parser = new parser_1.default();
 const storage = multer_1.default.memoryStorage();
 const upload = (0, multer_1.default)({ storage });
 const uploadImageToCloudinary = async (fileBuffer, fileName) => {
-    const dataUri = parser.format(path_1.default.extname(fileName).toString(), fileBuffer);
+    const extName = path_1.default.extname(fileName).toString();
+    const dataUri = parser.format(extName, fileBuffer);
     if (!dataUri.content) {
         throw new Error('Invalid file format');
     }
     return cloudinary_1.default.uploader.upload(dataUri.content, {
-        folder: 'product_images', // optional, specify a folder in Cloudinary
+        folder: 'product_images',
+        resource_type: 'image',
     });
 };
-router.post('/image', upload.array('images', 10), async (req, res) => {
+router.post('/image', upload.array('images', 4), async (req, res) => {
     try {
         if (!req.files || req.files.length === 0) {
             return res.status(400).send({ error: 'No files uploaded' });
@@ -33,8 +35,8 @@ router.post('/image', upload.array('images', 10), async (req, res) => {
         res.send({ urls });
     }
     catch (error) {
-        console.error(error); // Log the error for debugging
-        res.status(500).send({ error: 'Image upload failed' });
+        console.error('Image upload failed:', error); // Log the error for debugging
+        res.status(500).send({ error: 'Image upload failed', message: error.message });
     }
 });
 exports.default = router;
