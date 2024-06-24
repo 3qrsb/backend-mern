@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, Types } from "mongoose";
+import mongoose, { Schema, model, Types, Document } from "mongoose";
 
 type Review = {
   name: string;
@@ -7,7 +7,9 @@ type Review = {
   user: Types.ObjectId;
 };
 
-interface IProduct {
+interface IReview extends Review, Document {}
+
+interface IProduct extends Document {
   name: string;
   images: string[];
   price: number;
@@ -15,14 +17,13 @@ interface IProduct {
   brand: string;
   description: string;
   qty?: number;
-  reviews: Review[];
+  reviews: Types.DocumentArray<IReview>;
   totalSales: number;
   user: Types.ObjectId;
   inStock: boolean; 
-  // _id: string;
 }
 
-const reviewSchema = new Schema<Review>(
+const reviewSchema = new Schema<IReview>(
   {
     name: { type: String, required: true },
     rating: { type: Number, required: true },

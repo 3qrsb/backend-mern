@@ -214,40 +214,6 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
   }
 });
 
-// @desc    Create review
-// @route   POST /api/products/:id/reviews
-// @access  Private
-export const createReview = asyncHandler(async (req: any, res: Response) => {
-  const { comment, rating } = req.body;
-
-  const product = await Product.findById(req.params.id);
-
-  if (product) {
-    const exist = product.reviews.find(
-      (r) => r.user.toString() === req.user._id.toString()
-    );
-    if (exist) {
-      res.status(400).json({ message: "You already reviewed on this product" });
-    } else {
-      const review = {
-        name: req.user.name as string,
-        rating,
-        comment,
-        user: req.user._id,
-      };
-
-      product.reviews.push(review);
-
-      await product.save();
-
-      res.status(201).json(product.reviews);
-    }
-  } else {
-    res.status(404);
-    throw new Error("Product not found");
-  }
-});
-
 // @desc    Fetch top selling products
 // @route   GET /api/products/top-selling
 // @access  Public
