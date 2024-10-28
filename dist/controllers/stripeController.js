@@ -34,7 +34,7 @@ const createCheckoutSession = async (req, res) => {
             mode: 'payment',
             success_url: 'http://localhost:3000/success',
             cancel_url: 'http://localhost:3000/cancel',
-            allow_promotion_codes: true,
+            allow_promotion_codes: true, // Enable promotion codes
             metadata: {
                 orderId: orderId,
                 discountAmount: discountAmount.toString(), // Convert to string for metadata

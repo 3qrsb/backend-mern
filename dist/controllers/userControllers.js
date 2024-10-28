@@ -138,7 +138,7 @@ exports.googleLogin = (0, express_async_handler_1.default)(async (req, res) => {
         const user = new userModel_1.default({
             name: googleUser.name,
             email: googleUser.email,
-            password: googleUser.email,
+            password: googleUser.email, // It's better to generate a random password here
             isAdmin: false,
             isSeller: false,
             isVerified: true, // Set isVerified to true for Google sign-in

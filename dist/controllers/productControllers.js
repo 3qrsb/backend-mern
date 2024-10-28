@@ -135,7 +135,7 @@ exports.createProduct = (0, express_async_handler_1.default)(async (req, res) =>
             category,
             price,
             qty,
-            inStock,
+            inStock, // Add this line
             user: req.user._id,
         });
         const newProduct = await product.save();
