@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import Order from '../models/orderModel'
 import { sendPaymentConfirmationEmail } from './emailController';
+import Product from '../models/productModel';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2024-04-10',
@@ -27,17 +28,17 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
           product_data: {
             name: item.name,
           },
-          unit_amount: Math.round(item.price * 100), // price in cents
+          unit_amount: Math.round(item.price * 100),
         },
         quantity: item.qty,
       })),
       mode: 'payment',
       success_url: 'http://localhost:3000/success',
       cancel_url: 'http://localhost:3000/cancel',
-      allow_promotion_codes: true, // Enable promotion codes
+      allow_promotion_codes: true,
       metadata: {
         orderId: orderId,
-        discountAmount: discountAmount.toString(), // Convert to string for metadata
+        discountAmount: discountAmount.toString(),
       },
     });
 
@@ -49,7 +50,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
 
 export const handleWebhook = async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
-
   let event;
 
   try {
@@ -65,13 +65,29 @@ export const handleWebhook = async (req: Request, res: Response) => {
     if (orderId) {
       const order = await Order.findById(orderId);
       const amount = (session?.amount_total ?? 0) / 100;
+
       if (order && session.customer_details?.email) {
         order.isPaid = true;
+
         if (session.total_details?.amount_discount) {
           order.discountAmount = session.total_details.amount_discount / 100;
-          order.totalPrice = order.totalPrice - session.total_details?.amount_discount / 100 // Convert from cents to dollars
+          order.totalPrice = order.totalPrice - session.total_details?.amount_discount / 100
         }
+
         await order.save();
+
+        await Promise.all(
+          order.cartItems.map(async (item) => {
+            const product = await Product.findById(item._id);
+            if (product) {
+              product.qty = Math.max(0, (product.qty ?? 0) - item.qty);
+              product.totalSales += item.qty;
+              product.inStock = product.qty > 0;
+              await product.save();
+            }
+          })
+        );
+
         await sendPaymentConfirmationEmail(session.customer_details.email, orderId, session.payment_method_types[0], amount);
       }
     }
