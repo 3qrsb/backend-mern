@@ -8,5 +8,6 @@ namespace NodeJS {
     STRIPE_WEBHOOK_SECRET: string;
     EMAIL_USER: string;
     EMAIL_PASS: string;
+    CLIENT_URL: string;
   }
 }

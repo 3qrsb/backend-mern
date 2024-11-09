@@ -1,8 +1,8 @@
-import path from 'path';
-import dotenv from 'dotenv';
+import path from "path";
+import dotenv from "dotenv";
 
 // Parsing the env file.
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // Interface to load env variables
 // Note these variables can possibly be undefined
@@ -20,6 +20,7 @@ interface ENV {
   CLOUDINARY_CLOUD_NAME: string | undefined;
   CLOUDINARY_API_KEY: string | undefined;
   CLOUDINARY_API_SECRET: string | undefined;
+  CLIENT_URL: string | undefined;
 }
 
 interface Config {
@@ -34,6 +35,7 @@ interface Config {
   CLOUDINARY_CLOUD_NAME: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
+  CLIENT_URL: string;
 }
 
 // Loading process.env as ENV interface
@@ -51,6 +53,7 @@ const getConfig = (): ENV => {
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+    CLIENT_URL: process.env.CLIENT_URL,
   };
 };
 
