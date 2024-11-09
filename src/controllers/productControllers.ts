@@ -24,7 +24,7 @@ const ensureString = (param: any): string => {
   if (Array.isArray(param)) {
     return param[0];
   }
-  return typeof param === 'string' ? param : '';
+  return typeof param === "string" ? param : "";
 };
 
 // Utility function to ensure query parameter is a number
@@ -37,86 +37,88 @@ const ensureNumber = (param: any, defaultValue: number): number => {
 // @route   GET /api/products/search
 // @access  Public
 
-export const getProductSearch = asyncHandler(async (req: Request, res: Response) => {
-  const pageSize = ensureNumber(req.query.pageSize, 9);
-  const page = ensureNumber(req.query.page, 1);
-  const category = ensureString(req.query.category);
-  const brand = ensureString(req.query.brand);
-  const searchQuery = ensureString(req.query.query);
-  const sortOrder = ensureString(req.query.sortOrder);
-  const minPrice = ensureNumber(req.query.minPrice, 0);
-  const maxPrice = ensureNumber(req.query.maxPrice, Infinity);
+export const getProductSearch = asyncHandler(
+  async (req: Request, res: Response) => {
+    const pageSize = ensureNumber(req.query.pageSize, 9);
+    const page = ensureNumber(req.query.page, 1);
+    const category = ensureString(req.query.category);
+    const brand = ensureString(req.query.brand);
+    const searchQuery = ensureString(req.query.query);
+    const sortOrder = ensureString(req.query.sortOrder);
+    const minPrice = ensureNumber(req.query.minPrice, 0);
+    const maxPrice = ensureNumber(req.query.maxPrice, Infinity);
 
-  const queryFilter: Record<string, any> = searchQuery
-    ? {
-        name: {
-          $regex: searchQuery,
-          $options: "i",
+    const queryFilter: Record<string, any> = searchQuery
+      ? {
+          name: {
+            $regex: searchQuery,
+            $options: "i",
+          },
+        }
+      : {};
+    const categoryFilter: Record<string, any> = category ? { category } : {};
+    const brandFilter: Record<string, any> = brand ? { brand } : {};
+
+    let sortFilter: Record<string, 1 | -1> = {};
+    if (sortOrder === "low") {
+      sortFilter.price = 1;
+    } else if (sortOrder === "high") {
+      sortFilter.price = -1;
+    } else if (sortOrder === "rating") {
+      sortFilter = {}; // Will be replaced by the averageRating sort stage
+    } else if (sortOrder === "latest") {
+      sortFilter.createdAt = -1; // Sort by creation date, newest first
+    } else {
+      sortFilter.createdAt = 1; // Default sort by creation date, oldest first
+    }
+
+    const aggregationPipeline: PipelineStage[] = [
+      {
+        $match: {
+          ...queryFilter,
+          ...categoryFilter,
+          ...brandFilter,
+          price: { $gte: minPrice, $lte: maxPrice },
         },
-      }
-    : {};
-  const categoryFilter: Record<string, any> = category ? { category } : {};
-  const brandFilter: Record<string, any> = brand ? { brand } : {};
-
-  let sortFilter: Record<string, 1 | -1> = {};
-  if (sortOrder === "low") {
-    sortFilter.price = 1;
-  } else if (sortOrder === "high") {
-    sortFilter.price = -1;
-  } else if (sortOrder === "rating") {
-    sortFilter = {}; // Will be replaced by the averageRating sort stage
-  } else if (sortOrder === "latest") {
-    sortFilter.createdAt = -1; // Sort by creation date, newest first
-  } else {
-    sortFilter.createdAt = 1; // Default sort by creation date, oldest first
-  }
-
-  const aggregationPipeline: PipelineStage[] = [
-    {
-      $match: {
-        ...queryFilter,
-        ...categoryFilter,
-        ...brandFilter,
-        price: { $gte: minPrice, $lte: maxPrice }
       },
-    },
-    {
-      $addFields: {
-        averageRating: { $avg: "$reviews.rating" },
+      {
+        $addFields: {
+          averageRating: { $avg: "$reviews.rating" },
+        },
       },
-    },
-  ];
+    ];
 
-  if (sortOrder === "rating") {
-    aggregationPipeline.push({ $sort: { averageRating: -1 } });
-  } else {
-    aggregationPipeline.push({ $sort: sortFilter });
+    if (sortOrder === "rating") {
+      aggregationPipeline.push({ $sort: { averageRating: -1 } });
+    } else {
+      aggregationPipeline.push({ $sort: sortFilter });
+    }
+
+    aggregationPipeline.push(
+      { $skip: pageSize * (page - 1) },
+      { $limit: pageSize }
+    );
+
+    const productDocs = await Product.aggregate(aggregationPipeline);
+    const countProducts = await Product.countDocuments({
+      ...queryFilter,
+      ...categoryFilter,
+      ...brandFilter,
+    });
+
+    const categories = await Product.find({}).distinct("category");
+    const brands = await Product.find({}).distinct("brand");
+
+    res.status(200).json({
+      countProducts,
+      productDocs,
+      categories,
+      brands,
+      page,
+      pages: Math.ceil(countProducts / pageSize),
+    });
   }
-
-  aggregationPipeline.push(
-    { $skip: pageSize * (page - 1) },
-    { $limit: pageSize }
-  );
-
-  const productDocs = await Product.aggregate(aggregationPipeline);
-  const countProducts = await Product.countDocuments({
-    ...queryFilter,
-    ...categoryFilter,
-    ...brandFilter,
-  });
-
-  const categories = await Product.find({}).distinct("category");
-  const brands = await Product.find({}).distinct("brand");
-
-  res.status(200).json({
-    countProducts,
-    productDocs,
-    categories,
-    brands,
-    page,
-    pages: Math.ceil(countProducts / pageSize),
-  });
-});
+);
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id
@@ -141,7 +143,8 @@ export const getProductById = asyncHandler(
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const { name, images, description, brand, category, price, qty, inStock } = req.body;
+    const { name, images, description, brand, category, price, qty, inStock } =
+      req.body;
 
     try {
       const product = new Product({
@@ -152,7 +155,7 @@ export const createProduct = asyncHandler(
         category,
         price,
         qty,
-        inStock,  // Add this line
+        inStock, // Add this line
         user: (req as any).user._id,
       });
 
@@ -173,46 +176,54 @@ export const createProduct = asyncHandler(
 // @route   PUT /api/products/:id
 // @access  Private/Admin or Private/Seller (only their own products)
 
-export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
-  const product = await Product.findById(req.params.id);
+export const updateProduct = asyncHandler(
+  async (req: Request, res: Response) => {
+    const product = await Product.findById(req.params.id);
 
-  if (product) {
-    const user = (req as any).user;
+    if (product) {
+      const user = (req as any).user;
 
-    // Check if the user is the owner or admin
-    if (!product.user || product.user.equals(user._id) || user.isAdmin) {
-      Object.assign(product, req.body);
-      await product.save();
-      res.status(200).json("Product has been updated");
+      // Check if the user is the owner or admin
+      if (!product.user || product.user.equals(user._id) || user.isAdmin) {
+        Object.assign(product, req.body);
+        await product.save();
+        res.status(200).json("Product has been updated");
+      } else {
+        res
+          .status(403)
+          .json({ message: "Not authorized to update this product" });
+      }
     } else {
-      res.status(403).json({ message: "Not authorized to update this product" });
+      res.status(404).json({ message: "Product not found" });
     }
-  } else {
-    res.status(404).json({ message: "Product not found" });
   }
-});
+);
 
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
 // @access  Private/Admin or Private/Seller (only their own products)
 
-export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
-  const product = await Product.findById(req.params.id);
+export const deleteProduct = asyncHandler(
+  async (req: Request, res: Response) => {
+    const product = await Product.findById(req.params.id);
 
-  if (product) {
-    const user = (req as any).user;
+    if (product) {
+      const user = (req as any).user;
 
-    // Check if the user is the owner or admin
-    if (!product.user || product.user.equals(user._id) || user.isAdmin) {
-      await product.remove();
-      res.status(200).json("Product has been deleted");
+      // Check if the user is the owner or admin
+      if (!product.user || product.user.equals(user._id) || user.isAdmin) {
+        await product.remove();
+        res.status(200).json("Product has been deleted");
+      } else {
+        res
+          .status(403)
+          .json({ message: "Not authorized to delete this product" });
+      }
     } else {
-      res.status(403).json({ message: "Not authorized to delete this product" });
+      res.status(404).json({ message: "Product not found" });
     }
-  } else {
-    res.status(404).json({ message: "Product not found" });
   }
-});
+);
 
 // @desc    Fetch top selling products
 // @route   GET /api/products/top-selling

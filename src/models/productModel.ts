@@ -20,7 +20,7 @@ interface IProduct extends Document {
   reviews: Types.DocumentArray<IReview>;
   totalSales: number;
   user: Types.ObjectId;
-  inStock: boolean; 
+  inStock: boolean;
 }
 
 const reviewSchema = new Schema<IReview>(
@@ -43,7 +43,7 @@ const productSchema = new Schema<IProduct>(
     brand: { type: String, required: true },
     category: { type: String, required: true },
     description: { type: String, required: true },
-    qty: Number,
+    qty: { type: Number, default: 0 },
     reviews: [reviewSchema],
     totalSales: { type: Number, default: 0 },
     user: { type: Schema.Types.ObjectId, required: true, ref: "User" },
@@ -51,6 +51,23 @@ const productSchema = new Schema<IProduct>(
   },
   {
     timestamps: true,
+  }
+);
+
+// Middleware to automatically set inStock based on qty
+productSchema.pre<IProduct>("save", function (next) {
+  this.inStock = (this.qty ?? 0) > 0;
+  next();
+});
+
+productSchema.pre<mongoose.Query<IProduct, IProduct>>(
+  "findOneAndUpdate",
+  function (next) {
+    const update = this.getUpdate() as Partial<IProduct> | undefined;
+    if (update && update.qty !== undefined) {
+      this.set({ inStock: update.qty > 0 });
+    }
+    next();
   }
 );
 
