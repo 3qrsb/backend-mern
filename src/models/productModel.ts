@@ -16,7 +16,8 @@ interface IProduct extends Document {
   category: string;
   brand: string;
   description: string;
-  qty?: number;
+  qty: number;
+  availableQty: number;
   reviews: Types.DocumentArray<IReview>;
   totalSales: number;
   user: Types.ObjectId;
@@ -44,6 +45,7 @@ const productSchema = new Schema<IProduct>(
     category: { type: String, required: true },
     description: { type: String, required: true },
     qty: { type: Number, default: 0 },
+    availableQty: { type: Number, default: 0 },
     reviews: [reviewSchema],
     totalSales: { type: Number, default: 0 },
     user: { type: Schema.Types.ObjectId, required: true, ref: "User" },
@@ -56,6 +58,7 @@ const productSchema = new Schema<IProduct>(
 
 // Middleware to automatically set inStock based on qty
 productSchema.pre<IProduct>("save", function (next) {
+  this.availableQty = this.qty;
   this.inStock = (this.qty ?? 0) > 0;
   next();
 });
