@@ -1,5 +1,7 @@
-import mongoose from 'mongoose';
-import sanitizedConfig from '../config';
+import mongoose from "mongoose";
+import sanitizedConfig from "../config";
+
+mongoose.set("strictQuery", false);
 
 const connectDb = async () => {
   try {
