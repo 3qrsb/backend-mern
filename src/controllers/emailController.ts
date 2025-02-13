@@ -1,6 +1,6 @@
-import nodemailer from 'nodemailer';
-import jwt from 'jsonwebtoken';
-import sanitizedConfig from '../config';
+import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
+import sanitizedConfig from "../config";
 
 interface TokenPayload {
   [key: string]: any;
@@ -8,28 +8,36 @@ interface TokenPayload {
 
 const generateToken = (payload: TokenPayload) => {
   return jwt.sign(payload, sanitizedConfig.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: "30d",
   });
 };
 
 export default generateToken;
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
-  export const sendPaymentConfirmationEmail = async (email: string, orderId: string, paymentMethod: string, amount: number) => {
-    const paymentDate = new Date().toLocaleString('en-US', { timeZone: 'Asia/Almaty' });
-    const formattedPaymentMethod = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Payment Confirmation',
-      html: `
+export const sendPaymentConfirmationEmail = async (
+  email: string,
+  orderId: string,
+  paymentMethod: string,
+  amount: number
+) => {
+  const paymentDate = new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Almaty",
+  });
+  const formattedPaymentMethod =
+    paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Payment Confirmation",
+    html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="text-align: center; color: #4CAF50;">Payment Confirmation</h2>
         <p>Dear Customer,</p>
@@ -48,25 +56,25 @@ const transporter = nodemailer.createTransport({
       </div>
     `,
   };
-  
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log('Payment confirmation email sent successfully');
-    } catch (error) {
-      console.error('Error sending payment confirmation email:', error);
-    }
-  };
 
-  export const sendVerificationEmail = async (user: any) => {
-    const token = generateToken({ userId: user._id, email: user.email });
-  
-    const verificationLink = `http://localhost:3000/verify-email?token=${token}`;
-  
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: user.email,
-      subject: 'Email Verification',
-      html: `
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Payment confirmation email sent successfully");
+  } catch (error) {
+    console.error("Error sending payment confirmation email:", error);
+  }
+};
+
+export const sendVerificationEmail = async (user: any) => {
+  const token = generateToken({ userId: user._id, email: user.email });
+
+  const verificationLink = `http://localhost:3000/verify-email?token=${token}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: user.email,
+    subject: "Email Verification",
+    html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px;">
           <h2 style="color: #333; text-align: center;">Email Verification</h2>
           <p style="font-size: 16px; color: #555;">
@@ -90,12 +98,12 @@ const transporter = nodemailer.createTransport({
           </p>
         </div>
       `,
-    };
-  
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log('Verification email sent successfully');
-    } catch (error) {
-      console.error('Error sending verification email:', error);
-    }
   };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Verification email sent successfully");
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+  }
+};

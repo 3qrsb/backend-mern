@@ -1,5 +1,5 @@
-import { NextFunction, Request, Response, ErrorRequestHandler } from 'express';
-import sanitizedConfig from '../config';
+import { NextFunction, Request, Response, ErrorRequestHandler } from "express";
+import sanitizedConfig from "../config";
 
 export const notFound = (req: Request, res: Response, next: NextFunction) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
@@ -16,6 +16,6 @@ export const errorHandler: ErrorRequestHandler = (
   res.status(statusCode);
   res.json({
     message: err.message,
-    stack: sanitizedConfig.NODE_ENV === 'production' ? null : err.stack,
+    stack: sanitizedConfig.NODE_ENV === "production" ? null : err.stack,
   });
 };

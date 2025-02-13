@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   createProduct,
   deleteProduct,
@@ -7,25 +7,28 @@ import {
   getProductSearch,
   getTopSellingProducts,
   updateProduct,
-} from '../controllers/productControllers';
+} from "../controllers/productControllers";
 import {
   createReview,
   updateReview,
   deleteReview,
-} from '../controllers/reviewController';
-import { admin, auth, adminOrSeller } from '../middleware/auth';
+} from "../controllers/reviewController";
+import { auth, adminOrSeller } from "../middleware/auth";
 const router = express.Router();
 
-router.route('/').get(getProductList).post(auth, adminOrSeller, createProduct);
-router.route('/search').get(getProductSearch);
-router.route('/top-selling').get(getTopSellingProducts);
+router.route("/").get(getProductList).post(auth, adminOrSeller, createProduct);
+router.route("/search").get(getProductSearch);
+router.route("/top-selling").get(getTopSellingProducts);
 router
-  .route('/:id')
+  .route("/:id")
   .get(getProductById)
   .put(auth, adminOrSeller, updateProduct)
   .delete(auth, adminOrSeller, deleteProduct);
 
-router.route('/:id/reviews').post(auth, createReview);
-router.route('/:productId/reviews/:reviewId').put(auth, updateReview).delete(auth, deleteReview);
+router.route("/:id/reviews").post(auth, createReview);
+router
+  .route("/:productId/reviews/:reviewId")
+  .put(auth, updateReview)
+  .delete(auth, deleteReview);
 
 export default router;

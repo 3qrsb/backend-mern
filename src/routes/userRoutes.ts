@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   login,
   register,
@@ -9,21 +9,21 @@ import {
   promoteAdmin,
   googleLogin,
   getNewCustomersThisMonth,
-} from '../controllers/userControllers';
-import { admin, auth } from '../middleware/auth';
+} from "../controllers/userControllers";
+import { admin, auth } from "../middleware/auth";
 
 const router = express.Router();
 
-router.route('/').get(getUsersList);
-router.get('/new-customers', auth, admin, getNewCustomersThisMonth);
-router.route('/promote/:id').post(auth, admin, promoteAdmin);
+router.route("/").get(getUsersList);
+router.get("/new-customers", auth, admin, getNewCustomersThisMonth);
+router.route("/promote/:id").post(auth, admin, promoteAdmin);
 router
-  .route('/:id')
+  .route("/:id")
   .get(getUserBydId)
   .delete(auth, admin, deleteUser)
   .put(auth, updateUserProfile);
-router.route('/register').post(register);
-router.route('/google-login').post(googleLogin);
-router.route('/login').post(login);
+router.route("/register").post(register);
+router.route("/google-login").post(googleLogin);
+router.route("/login").post(login);
 
 export default router;

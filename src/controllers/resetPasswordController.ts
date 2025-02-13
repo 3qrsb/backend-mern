@@ -1,37 +1,37 @@
-import { Request, Response } from 'express';
-import User from '../models/userModel';
-import crypto from 'crypto';
-import nodemailer from 'nodemailer';
+import { Request, Response } from "express";
+import User from "../models/userModel";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 export const forgotPassword = async (req: Request, res: Response) => {
-    const { email } = req.body;
-    try {
-      const user = await User.findOne({ email });
-      if (!user) {
-        console.error('User not found');
-        return res.status(404).json({ error: 'User not found' });
-      }
-  
-      const token = crypto.randomBytes(32).toString('hex');
-      user.resetPasswordToken = token;
-      user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-      await user.save();
-  
-      const resetUrl = `http://localhost:3000/reset-password/${token}`;
-  
-      const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-  
-      const mailOptions = {
-        to: user.email,
-        from: process.env.EMAIL,
-        subject: 'Password Reset',
-        html: `
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.error("User not found");
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    const resetUrl = `http://localhost:3000/reset-password/${token}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      to: user.email,
+      from: process.env.EMAIL,
+      subject: "Password Reset",
+      html: `
           <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; padding: 20px; font-size: 16px; line-height: 1.5;">
             <h2 style="color: #333; text-align: center;">Password Reset</h2>
             <p>You are receiving this because you (or someone else) have requested the reset of the password for your account.</p>
@@ -46,40 +46,40 @@ export const forgotPassword = async (req: Request, res: Response) => {
             <p>${resetUrl}</p>
           </div>
         `,
-      };
-  
-      await transporter.sendMail(mailOptions);
-  
-      res.status(200).json({ message: 'Password reset email sent' });
-    } catch (err) {
-      console.error('Error in forgotPassword:', err);
-      res.status(500).json({ error: 'Server error' });
-    }
-  };
+    };
 
-  export const resetPassword = async (req: Request, res: Response) => {
-    const { token, password } = req.body;
-    try {
-      const user = await User.findOne({
-        resetPasswordToken: token,
-        resetPasswordExpires: { $gt: Date.now() },
-      });
-  
-      if (!user) {
-        console.error('Invalid or expired token');
-        return res.status(400).json({ error: 'Invalid or expired token' });
-      }
-  
-      user.password = password;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpires = undefined;
-      await user.save();
-  
-      console.log('Password reset successfully for user:', user.email);
-  
-      res.status(200).json({ message: 'Password has been reset' });
-    } catch (err) {
-      console.error('Error in resetPassword:', err);
-      res.status(500).json({ error: 'Server error' });
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: "Password reset email sent" });
+  } catch (err) {
+    console.error("Error in forgotPassword:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      console.error("Invalid or expired token");
+      return res.status(400).json({ error: "Invalid or expired token" });
     }
-  };
+
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    console.log("Password reset successfully for user:", user.email);
+
+    res.status(200).json({ message: "Password has been reset" });
+  } catch (err) {
+    console.error("Error in resetPassword:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};

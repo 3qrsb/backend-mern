@@ -5,8 +5,7 @@ import User from "../models/userModel";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/generateToken";
 import { sendVerificationEmail } from "./emailController";
-import * as jsonwebtoken from 'jsonwebtoken';
-
+import * as jsonwebtoken from "jsonwebtoken";
 
 // @desc    Register a new user
 // @route   POST /api/users/register
@@ -65,7 +64,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   if (user) {
     if (!user.isVerified) {
-      res.status(401).json({ message: "Email not verified. Please verify your email." });
+      res
+        .status(401)
+        .json({ message: "Email not verified. Please verify your email." });
       return;
     }
 
@@ -86,7 +87,6 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     res.status(404).json({ message: "User not found." });
   }
 });
-
 
 // @desc    Google Login
 // @route   POST /api/users/google-login
@@ -155,52 +155,53 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-
 // @desc    Get all users
 // @route   Get /api/users
 // @access  Admin
 
-export const getUsersList = asyncHandler(async (req: Request, res: Response) => {
-  const pageSize = 10;
-  const page: any = req.query.page || 1;
-  const query: any = req.query.query || "";
+export const getUsersList = asyncHandler(
+  async (req: Request, res: Response) => {
+    const pageSize = 10;
+    const page: any = req.query.page || 1;
+    const query: any = req.query.query || "";
 
-  const queryFilter =
-    query && query !== "all"
-      ? {
-        username: {
-          $regex: query,
-          $options: "i",
-        },
-      }
-      : {};
+    const queryFilter =
+      query && query !== "all"
+        ? {
+            username: {
+              $regex: query,
+              $options: "i",
+            },
+          }
+        : {};
 
-  const users = await User.find({
-    ...queryFilter,
-  })
-    .skip(pageSize * (page - 1))
-    .sort("-createdAt")
-    .limit(pageSize)
-    .lean();
+    const users = await User.find({
+      ...queryFilter,
+    })
+      .skip(pageSize * (page - 1))
+      .sort("-createdAt")
+      .limit(pageSize)
+      .lean();
 
-  const countUsers = await User.countDocuments({
-    ...queryFilter,
-  });
-
-  const pages = Math.ceil(countUsers / pageSize);
-
-  if (users) {
-    res.status(200).json({
-      countUsers,
-      users,
-      page,
-      pages,
+    const countUsers = await User.countDocuments({
+      ...queryFilter,
     });
-  } else {
-    res.status(500);
-    throw new Error("Users not found!");
+
+    const pages = Math.ceil(countUsers / pageSize);
+
+    if (users) {
+      res.status(200).json({
+        countUsers,
+        users,
+        page,
+        pages,
+      });
+    } else {
+      res.status(500);
+      throw new Error("Users not found!");
+    }
   }
-});
+);
 
 // @desc    Get single user
 // @route   Get /api/users/:id
