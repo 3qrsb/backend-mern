@@ -1,7 +1,16 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
-export interface IUser {
+interface Address {
+  country: string;
+  state?: string;
+  city: string;
+  street: string;
+  apartment?: string;
+  postalCode: string;
+}
+
+export interface IUser extends Document {
   _id: string;
   name: string;
   email: string;
@@ -9,11 +18,21 @@ export interface IUser {
   isAdmin: boolean;
   isVerified: boolean;
   isSeller: boolean;
+  addresses: Address[];
   verificationToken?: string | null;
   verificationTokenExpires?: Date | null;
   resetPasswordToken?: string;
   resetPasswordExpires?: number;
 }
+
+const addressSchema = new Schema<Address>({
+  street: { type: String, required: true },
+  apartment: { type: String },
+  city: { type: String, required: true },
+  state: { type: String },
+  country: { type: String, required: true },
+  postalCode: { type: String, required: true },
+});
 
 const userSchema = new Schema<IUser>(
   {
@@ -22,11 +41,8 @@ const userSchema = new Schema<IUser>(
     password: { type: String, required: true },
     isAdmin: { type: Boolean, required: true, default: false },
     isVerified: { type: Boolean, default: false },
-    isSeller: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
+    isSeller: { type: Boolean, required: true, default: false },
+    addresses: [addressSchema],
     verificationToken: { type: String },
     verificationTokenExpires: { type: Date },
     resetPasswordToken: { type: String },
@@ -37,18 +53,13 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// userSchema.methods.matchPassword = async function (enteredPassword: string) {
-//   return await bcrypt.compare(enteredPassword, this.password);
-// };
-
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
-    next();
+    return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
 const User = model<IUser>("User", userSchema);
-
 export default User;

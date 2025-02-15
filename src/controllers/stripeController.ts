@@ -24,7 +24,6 @@ const updateProductStock = async (cartItems: any[]) => {
 
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
-    // Ensure user is authenticated
     const userId = (req as any).user ? (req as any).user._id : null;
     if (!userId) {
       res.status(401).json({ message: "User not authenticated" });
@@ -102,7 +101,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
           cartItems: orderDetails.cartItems,
           shippingAddress: orderDetails.shippingAddress,
           totalPrice: orderDetails.totalPrice,
-          discountAmount: orderDetails.discountAmount,
+          discountAmount: orderDetails.discountAmount || 0,
           user: orderDetails.user,
           isPaid: true,
           status: "paid",
