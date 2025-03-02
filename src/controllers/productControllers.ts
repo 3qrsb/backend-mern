@@ -19,7 +19,6 @@ export const getProductList = asyncHandler(
   }
 );
 
-// Utility function to ensure a query parameter is a string
 const ensureString = (param: any): string => {
   if (Array.isArray(param)) {
     return param[0];
@@ -27,7 +26,6 @@ const ensureString = (param: any): string => {
   return typeof param === "string" ? param : "";
 };
 
-// Utility function to ensure query parameter is a number
 const ensureNumber = (param: any, defaultValue: number): number => {
   const num = Number(param);
   return isNaN(num) ? defaultValue : num;
@@ -65,11 +63,11 @@ export const getProductSearch = asyncHandler(
     } else if (sortOrder === "high") {
       sortFilter.price = -1;
     } else if (sortOrder === "rating") {
-      sortFilter = {}; // Will be replaced by the averageRating sort stage
+      sortFilter = {};
     } else if (sortOrder === "latest") {
-      sortFilter.createdAt = -1; // Sort by creation date, newest first
+      sortFilter.createdAt = -1;
     } else {
-      sortFilter.createdAt = 1; // Default sort by creation date, oldest first
+      sortFilter.createdAt = 1;
     }
 
     const aggregationPipeline: PipelineStage[] = [
@@ -84,6 +82,35 @@ export const getProductSearch = asyncHandler(
       {
         $addFields: {
           averageRating: { $avg: "$reviews.rating" },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $project: {
+          name: 1,
+          images: 1,
+          price: 1,
+          brand: 1,
+          category: 1,
+          description: 1,
+          qty: 1,
+          availableQty: 1,
+          reviews: 1,
+          totalSales: 1,
+          inStock: 1,
+          createdAt: 1,
+          averageRating: 1,
+          "user.name": 1,
+          "user.isAdmin": 1,
+          "user.isSeller": 1,
         },
       },
     ];
@@ -155,7 +182,7 @@ export const createProduct = asyncHandler(
         category,
         price,
         qty,
-        inStock, // Add this line
+        inStock,
         user: (req as any).user._id,
       });
 
@@ -163,7 +190,6 @@ export const createProduct = asyncHandler(
       res.status(201).json(newProduct);
     } catch (error: any) {
       if (error.code === 11000) {
-        // Handle duplicate key error
         res.status(400).json({ message: "Duplicate key error." });
       } else {
         res.status(500).json({ message: "Internal server error." });
@@ -183,7 +209,6 @@ export const updateProduct = asyncHandler(
     if (product) {
       const user = (req as any).user;
 
-      // Check if the user is the owner or admin
       if (!product.user || product.user.equals(user._id) || user.isAdmin) {
         Object.assign(product, req.body);
         await product.save();
@@ -210,7 +235,6 @@ export const deleteProduct = asyncHandler(
     if (product) {
       const user = (req as any).user;
 
-      // Check if the user is the owner or admin
       if (!product.user || product.user.equals(user._id) || user.isAdmin) {
         await product.remove();
         res.status(200).json("Product has been deleted");
