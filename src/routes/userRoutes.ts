@@ -9,6 +9,8 @@ import {
   promoteAdmin,
   googleLogin,
   getNewCustomersThisMonth,
+  demoteSeller,
+  promoteSeller,
 } from "../controllers/userControllers";
 
 import {
@@ -24,7 +26,9 @@ const router = express.Router();
 
 router.route("/").get(getUsersList);
 router.get("/new-customers", auth, admin, getNewCustomersThisMonth);
-router.route("/promote/:id").post(auth, admin, promoteAdmin);
+router.route("/promote/admin/:id").post(auth, admin, promoteAdmin);
+router.route("/promote/seller/:id").post(auth, admin, promoteSeller);
+router.route("/demote/seller/:id").post(auth, admin, demoteSeller);
 router.route("/register").post(register);
 router.route("/google-login").post(googleLogin);
 router.route("/login").post(login);

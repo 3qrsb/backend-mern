@@ -242,18 +242,58 @@ export const updateUserProfile = asyncHandler(
   }
 );
 
-// @desc    promote user to admin
-// @route   Post /api/users/promote/:id
+// @desc    Promote user to admin
+// @route   POST /api/users/promote/admin/:id
 // @access  Admin
-
 export const promoteAdmin = asyncHandler(
   async (req: Request, res: Response) => {
     const user = await User.findById(req.params.id);
-
     if (user) {
       user.isAdmin = true;
       await user.save();
       res.status(200).json("User has been promoted to admin");
+    } else {
+      res.status(400);
+      throw new Error("User not found!");
+    }
+  }
+);
+
+// @desc    Promote user to seller
+// @route   POST /api/users/promote/seller/:id
+// @access  Admin
+export const promoteSeller = asyncHandler(
+  async (req: Request, res: Response) => {
+    const user = await User.findById(req.params.id);
+    if (user) {
+      if (user.isAdmin) {
+        res.status(400);
+        throw new Error("Admin already has seller privileges");
+      }
+      user.isSeller = true;
+      await user.save();
+      res.status(200).json("User has been promoted to seller");
+    } else {
+      res.status(400);
+      throw new Error("User not found!");
+    }
+  }
+);
+
+// @desc    Demote seller to regular user
+// @route   POST /api/users/demote/seller/:id
+// @access  Admin
+export const demoteSeller = asyncHandler(
+  async (req: Request, res: Response) => {
+    const user = await User.findById(req.params.id);
+    if (user) {
+      if (user.isAdmin) {
+        res.status(400);
+        throw new Error("Admin cannot be demoted from seller");
+      }
+      user.isSeller = false;
+      await user.save();
+      res.status(200).json("User has been demoted from seller");
     } else {
       res.status(400);
       throw new Error("User not found!");
