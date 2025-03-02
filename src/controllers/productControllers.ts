@@ -107,6 +107,7 @@ export const getProductSearch = asyncHandler(
           totalSales: 1,
           inStock: 1,
           createdAt: 1,
+          updatedAt: 1,
           averageRating: 1,
           "user.name": 1,
           "user.isAdmin": 1,
