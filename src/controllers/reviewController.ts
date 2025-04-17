@@ -94,3 +94,17 @@ export const deleteReview = asyncHandler(
     }
   }
 );
+
+// @desc    Get all reviews for a product
+// @route   GET /api/products/:id/reviews
+// @access  Public
+export const getReviews = asyncHandler(
+  async (req: any, res: Response): Promise<void> => {
+    const product = await Product.findById(req.params.id);
+    if (product) {
+      res.status(200).json(product.reviews);
+    } else {
+      res.status(404).json({ message: "Product not found" });
+    }
+  }
+);
