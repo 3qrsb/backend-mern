@@ -1,37 +1,35 @@
 import express from "express";
 import {
-  login,
-  register,
   getUsersList,
-  getUserBydId,
-  deleteUser,
+  getUserById,
   updateUserProfile,
   promoteAdmin,
-  googleLogin,
-  getNewCustomersThisMonth,
-  demoteSeller,
   promoteSeller,
+  demoteSeller,
+  deleteUser,
+  getNewCustomersThisMonth,
 } from "../controllers/userControllers";
-
 import {
   getUserAddresses,
   addUserAddress,
   updateUserAddress,
   deleteUserAddress,
 } from "../controllers/addressController";
-
-import { admin, auth } from "../middleware/auth";
+import { auth, admin } from "../middleware/auth";
 
 const router = express.Router();
 
-router.route("/").get(getUsersList);
+router.get("/", auth, admin, getUsersList);
 router.get("/new-customers", auth, admin, getNewCustomersThisMonth);
-router.route("/promote/admin/:id").post(auth, admin, promoteAdmin);
-router.route("/promote/seller/:id").post(auth, admin, promoteSeller);
-router.route("/demote/seller/:id").post(auth, admin, demoteSeller);
-router.route("/register").post(register);
-router.route("/google-login").post(googleLogin);
-router.route("/login").post(login);
+router.post("/promote/admin/:id", auth, admin, promoteAdmin);
+router.post("/promote/seller/:id", auth, admin, promoteSeller);
+router.post("/demote/seller/:id", auth, admin, demoteSeller);
+
+router
+  .route("/:id")
+  .get(auth, getUserById)
+  .put(auth, updateUserProfile)
+  .delete(auth, admin, deleteUser);
 
 router
   .route("/:userId/addresses")
@@ -42,11 +40,5 @@ router
   .route("/:userId/addresses/:addressId")
   .put(auth, updateUserAddress)
   .delete(auth, deleteUserAddress);
-
-router
-  .route("/:id")
-  .get(getUserBydId)
-  .delete(auth, admin, deleteUser)
-  .put(auth, updateUserProfile);
 
 export default router;

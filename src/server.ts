@@ -1,15 +1,16 @@
 import express, { Application } from "express";
-import connectDb from "./config/db";
+import morgan from "morgan";
 import dotenv from "dotenv";
+import cors from "cors";
+import path from "path";
+import connectDb from "./config/db";
+import sanitizedConfig from "./config";
+import { errorHandler, notFound } from "./middleware/errorMiddleware";
 import productRoutes from "./routes/productRoutes";
 import userRoutes from "./routes/userRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
-import morgan from "morgan";
-import { errorHandler, notFound } from "./middleware/errorMiddleware";
-import cors from "cors";
-import path from "path";
-import sanitizedConfig from "./config";
+import authRoutes from "./routes/authRoutes";
 import stripeRoutes from "./routes/stripeRoutes";
 import { verifyEmail } from "./controllers/verifyController";
 import {
@@ -44,6 +45,7 @@ app.get("/api/verify/verify-email", verifyEmail);
 app.use("/api/stripe", stripeRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
+app.use('/api/auth', authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/uploads", uploadRoutes);
 
