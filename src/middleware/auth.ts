@@ -1,58 +1,66 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
-import { NextFunction, Response } from "express";
+import { NextFunction, Response, Request } from "express";
 import User from "../models/userModel";
 import {
   DataStoredInToken,
   RequestWithUser,
 } from "../utils/interfaces/user.interface";
-import sanitizedConfig from "../config";
+import config from "../config";
 
 export const auth = asyncHandler(
-  async (req: any, res: Response, next: NextFunction) => {
-    const { authorization } = req.headers;
-    let token;
-
-    if (authorization && authorization.startsWith("Bearer")) {
-      try {
-        token = authorization.split(" ")[1];
-        const decoded = jwt.verify(
-          token,
-          sanitizedConfig.JWT_SECRET
-        ) as DataStoredInToken;
-        req.user = await User.findById(decoded.id).select("-password");
-        next();
-      } catch (error) {
-        console.error(error);
-        res.status(401);
-        throw new Error("Not authorized, token failed");
-      }
-    }
-    if (!token) {
+  async (req: Request, res: Response, next: NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
       res.status(401);
       throw new Error("Not authorized, no token");
+    }
+
+    const token = authHeader.split(" ")[1];
+    try {
+      const decoded = jwt.verify(token, config.JWT_SECRET) as DataStoredInToken;
+
+      if (decoded.type !== "access") {
+        res.status(401);
+        throw new Error("Not authorized, invalid token type");
+      }
+
+      const user = await User.findById(decoded.id).select("-password");
+      if (!user) {
+        res.status(401);
+        throw new Error("Not authorized, user not found");
+      }
+
+      (req as RequestWithUser).user = user;
+      next();
+    } catch (error) {
+      console.error(error);
+      res.status(401);
+      throw new Error("Not authorized, token failed");
     }
   }
 );
 
 export const admin = asyncHandler(
-  async (req: RequestWithUser | any, res: Response, next: NextFunction) => {
-    if (req.user && req.user.isAdmin) {
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as RequestWithUser).user;
+    if (user?.isAdmin) {
       next();
     } else {
       res.status(401);
-      throw new Error("Not authorized, no admin");
+      throw new Error("Not authorized, admin only");
     }
   }
 );
 
 export const adminOrSeller = asyncHandler(
-  async (req: RequestWithUser | any, res: Response, next: NextFunction) => {
-    if (req.user && (req.user.isAdmin || req.user.isSeller)) {
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as RequestWithUser).user;
+    if (user?.isAdmin || user?.isSeller) {
       next();
     } else {
       res.status(401);
-      throw new Error("Not authorized as an admin or seller");
+      throw new Error("Not authorized, admin or seller only");
     }
   }
 );
